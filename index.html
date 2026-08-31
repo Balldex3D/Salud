@@ -20,10 +20,13 @@
 
     #nav {
       display: flex; gap: 6px; padding: 10px var(--space-md);
+      /* safe-area-inset-bottom cubre el home indicator del iPad/iPhone */
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
       background: rgba(13,20,48,.97);
       border-top: 1px solid rgba(62,197,255,.3);
       flex-wrap: nowrap; overflow-x: auto;
       scrollbar-width: none;
+      flex-shrink: 0; /* nunca comprimir el nav */
     }
     #nav::-webkit-scrollbar { display: none; }
     #nav button {

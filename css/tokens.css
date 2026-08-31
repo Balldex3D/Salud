@@ -68,6 +68,12 @@
   box-sizing: border-box;
 }
 
+html {
+  /* -webkit-fill-available: altura real visible en Safari iOS (excluye la chrome bar) */
+  height: -webkit-fill-available;
+  height: 100%;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -85,7 +91,9 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  /* dvh = dynamic viewport height, excluye chrome de Safari iOS 15.4+ */
+  height: 100dvh;
+  height: -webkit-fill-available; /* fallback Safari pre-dvh */
   /* Fondo degradado fijo que funciona en iOS */
   background: var(--clr-dark);
 }
@@ -107,6 +115,7 @@ body::before {
 
 #app {
   flex: 1;
+  min-height: 0; /* permite shrink en flex column — crítico para Safari iOS */
   overflow: hidden;
   display: flex;
   flex-direction: column;
