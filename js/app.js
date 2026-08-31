@@ -24,7 +24,6 @@ let recetaGuiado = null;
 
 // Inicializar app
 async function init() {
-  // Registrar service worker
   if ('serviceWorker' in navigator) {
     try {
       const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
@@ -34,14 +33,11 @@ async function init() {
     }
   }
 
-  // Solicitar persistencia de localStorage (mitigar Safari ITP)
   await store.solicitarPersistencia();
 
-  // Detectar si está en modo standalone / instalado
   const esStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   console.log('Standalone:', esStandalone);
 
-  // Onboarding
   if (!esStandalone && !localStorage.getItem('onboarding-completado')) {
     mostrarOnboarding();
   } else {
@@ -49,12 +45,10 @@ async function init() {
     irAPanel('dashboard');
   }
 
-  // Solicitar permiso de notificaciones
   if (Notification.permission === 'default') {
     Notification.requestPermission();
   }
 
-  // Event listeners
   setupEventListeners();
 }
 
@@ -106,7 +100,13 @@ function setupEventListeners() {
   const ejLevelUp = document.getElementById('ej-levelup');
   if (ejLevelUp) ejLevelUp.addEventListener('click', () => ejLevelUp.classList.remove('show'));
 
-  // Paso anterior/siguiente en modo guiado
+  // Salir del modo guiado sin completar
+  document.getElementById('btn-guiado-salir').addEventListener('click', () => {
+    timer.detener();
+    irAPanel('dashboard');
+  });
+
+  // Botones del modo guiado
   document.getElementById('btn-paso-anterior').addEventListener('click', () => {
     if (pasoActual > 0) {
       pasoActual--;
@@ -119,7 +119,7 @@ function setupEventListeners() {
       pasoActual++;
       renderizarPaso();
     } else {
-      // Completar quest
+      // Último paso: completar quest
       completarQuest(recetaGuiado.tipo, recetaGuiado);
       timer.detener();
       irAPanel('dashboard');
@@ -132,21 +132,22 @@ function irAPanel(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
 
   // Resaltar botón activo en nav
+  const navScreens = ['dashboard','ejercicio','batch','mercado','progreso','ajustes'];
   document.querySelectorAll('#nav button').forEach(btn => {
-    btn.style.color = btn.dataset.screen === screen ? '#fff' : '';
-    btn.style.borderColor = btn.dataset.screen === screen ? '#3ec5ff' : '';
-    btn.style.background = btn.dataset.screen === screen
+    const isActive = btn.dataset.screen === screen;
+    btn.style.color = isActive ? '#fff' : '';
+    btn.style.borderColor = isActive ? '#3ec5ff' : '';
+    btn.style.background = isActive
       ? 'linear-gradient(180deg,rgba(123,47,247,.35),rgba(62,197,255,.15))'
       : '';
   });
 
-  // Mostrar el solicitado
+  // Mostrar la pantalla solicitada
   const screenEl = document.getElementById(`screen-${screen}`);
   if (screenEl) {
     screenEl.classList.add('active');
     screenActual = screen;
 
-    // Renderizar contenido dinamico
     if (screen === 'dashboard') renderizarDashboard();
     if (screen === 'ejercicio') renderEjercicio();
     if (screen === 'batch') renderizarBatch();
@@ -156,7 +157,7 @@ function irAPanel(screen) {
   }
 }
 
-// ============ RENDERIZADO DE PANTALLAS ============
+// ============ DASHBOARD ============
 
 function renderizarDashboard() {
   const hoy = new Date();
@@ -167,7 +168,6 @@ function renderizarDashboard() {
 
   const progXp = store.obtenerProgresoNivel(store.data.xp);
 
-  // Actualizar stats
   document.getElementById('hunter-nivel').textContent = progXp.nivel;
   document.getElementById('hunter-racha').textContent = store.calcularRacha(hoy);
 
@@ -177,7 +177,6 @@ function renderizarDashboard() {
   document.getElementById('xp-info').textContent = `${xpDelNivel} / ${xpParaSiguiente}`;
   document.getElementById('xp-bar').style.width = pctXp + '%';
 
-  // Quests
   const questsList = document.getElementById('quests-list');
   questsList.innerHTML = '';
 
@@ -186,44 +185,19 @@ function renderizarDashboard() {
   ];
 
   if (diaDelMes !== 'domingo') {
-    quests.push({
-      id: 'almuerzo',
-      nombre: `Almuerzo — ${rutina.almuerzo}`,
-      tipo: 'almuerzo',
-      receta: rutina.almuerzo
-    });
+    quests.push({ id: 'almuerzo', nombre: `Almuerzo — ${rutina.almuerzo}`, tipo: 'almuerzo', receta: rutina.almuerzo });
   } else {
-    quests.push({
-      id: 'almuerzo',
-      nombre: 'Almuerzo libre — sin registrar',
-      tipo: 'almuerzo',
-      receta: null
-    });
+    quests.push({ id: 'almuerzo', nombre: 'Almuerzo libre — sin registrar', tipo: 'almuerzo', receta: null });
   }
 
   if (diaDelMes !== 'domingo') {
-    quests.push({
-      id: 'cena',
-      nombre: `Cena — ${rutina.cena}`,
-      tipo: 'cena',
-      receta: rutina.cena
-    });
+    quests.push({ id: 'cena', nombre: `Cena — ${rutina.cena}`, tipo: 'cena', receta: rutina.cena });
   } else {
-    quests.push({
-      id: 'cena',
-      nombre: 'Cena libre — sopa miso ligera',
-      tipo: 'cena',
-      receta: null
-    });
+    quests.push({ id: 'cena', nombre: 'Cena libre — sopa miso ligera', tipo: 'cena', receta: null });
   }
 
   if (rutina.batch_cooking) {
-    quests.push({
-      id: 'batch',
-      nombre: 'Batch cooking',
-      tipo: 'batch_cooking',
-      receta: null
-    });
+    quests.push({ id: 'batch', nombre: 'Batch cooking', tipo: 'batch_cooking', receta: null });
   }
 
   quests.forEach(quest => {
@@ -233,38 +207,48 @@ function renderizarDashboard() {
 
     const card = document.createElement('div');
     card.className = `quest-card ${completada ? 'quest-card--completada' : ''}`;
+    card.style.cssText = 'flex-direction:column; gap:10px; align-items:stretch;';
+
     card.innerHTML = `
-      <div class="quest-card__info">
-        <div class="quest-title">${quest.nombre}</div>
-        ${kcal > 0 ? `<div class="text-secondary" style="font-size: 12px; margin-top: 4px;">${kcal} kcal</div>` : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <div class="quest-card__info" style="flex:1;">
+          <div class="quest-title" style="font-size:15px;">${quest.nombre}</div>
+          ${kcal > 0 ? `<div class="text-secondary" style="font-size:12px;margin-top:4px;">${kcal} kcal</div>` : ''}
+        </div>
+        <div class="quest-card__check ${completada ? 'quest-card__check--checked' : ''}" data-role="check" style="flex-shrink:0;">
+          ${completada ? '✓' : ''}
+        </div>
       </div>
-      <div class="quest-card__check ${completada ? 'quest-card__check--checked' : ''}">
-        ${completada ? '✓' : ''}
-      </div>
+      ${recetaData ? `
+        <button data-role="cocinar"
+          style="width:100%;background:linear-gradient(90deg,rgba(123,47,247,.45),rgba(62,197,255,.2));
+                 border-color:rgba(62,197,255,.55);font-size:12px;min-height:40px;
+                 letter-spacing:.2em;padding:8px 12px;">
+          ${completada ? '↩ VER RECETA DE NUEVO' : '▶ COCINAR PASO A PASO'}
+        </button>
+      ` : ''}
     `;
 
-    // Click en el check
-    const checkEl = card.querySelector('.quest-card__check');
-    checkEl.addEventListener('click', () => {
+    // Marcar/desmarcar completada
+    const checkEl = card.querySelector('[data-role="check"]');
+    checkEl.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (completada) {
-        // Desmarcar
         questsDelDia[quest.id] = false;
       } else {
-        // Marcar
         completarQuest(quest.id, recetaData || { tipo: quest.tipo });
       }
       store.save();
       renderizarDashboard();
     });
 
-    // Click en la quest para abrir receta
-    if (recetaData) {
-      card.addEventListener('click', (e) => {
-        if (e.target !== checkEl) {
-          mostrarReceta(quest.receta);
-        }
+    // Botón "COCINAR PASO A PASO" — va directo al modo guiado
+    const cocinarBtn = card.querySelector('[data-role="cocinar"]');
+    if (cocinarBtn) {
+      cocinarBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        iniciarGuiado(quest.receta);
       });
-      card.style.cursor = 'pointer';
     }
 
     questsList.appendChild(card);
@@ -275,66 +259,77 @@ function renderizarDashboard() {
   const totalesEl = document.getElementById('totales-hoy');
   if (totales.verificable) {
     const progreso = progresoVsMeta(totales);
-    const metaStr = `
+    totalesEl.innerHTML = `
       ${Math.round(totales.kcal)} / ${progreso.meta} kcal<br>
       P: ${Math.round(totales.proteina)}g | G: ${Math.round(totales.grasa)}g | C: ${Math.round(totales.carbo)}g
     `;
-    totalesEl.innerHTML = metaStr;
   } else {
     totalesEl.innerHTML = 'Almuerzo libre + cena libre<br><em>No verificable</em>';
   }
 }
 
+// ============ RECETA / GUIADO ============
+
+/**
+ * Va directamente al modo guiado (paso a paso) sin pasar por pantalla de detalle.
+ */
+function iniciarGuiado(recetaId) {
+  recetaGuiado = RECETAS[recetaId];
+  if (!recetaGuiado) return;
+  recetaActual = recetaGuiado;
+  pasoActual = 0;
+  irAPanel('guiado');
+  renderizarPaso();
+}
+
+/**
+ * Muestra la pantalla de detalle de receta (ingredientes + macros).
+ */
 function mostrarReceta(recetaId) {
   recetaActual = RECETAS[recetaId];
   if (!recetaActual) return;
+
+  // ¡Primero cambiar a la pantalla de receta!
+  irAPanel('receta');
 
   const container = document.getElementById('receta-content');
   const ajuste = store.obtenerAjuste('ajuste_fase1');
   const macros = macrosDeReceta(recetaId, ajuste && recetaActual.ajuste_fase1);
 
   let html = `
-    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--space-lg);">
-      <div>
-        <h2>${recetaActual.nombre}</h2>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:var(--space-lg);">
+      <button id="btn-volver-receta" style="flex-shrink:0;min-width:80px;font-size:12px;padding:8px;">← Volver</button>
+      <div style="flex:1;">
+        <h2 style="margin:0;font-size:18px;">${recetaActual.nombre}</h2>
         ${recetaActual.rango ? `<span class="badge badge--rango-${recetaActual.rango.toLowerCase()}">${recetaActual.rango}</span>` : ''}
-        <div class="text-secondary" style="margin-top: var(--space-sm); font-size: 12px;">${recetaActual.cuando}</div>
       </div>
-      <button id="btn-modo-guiado" style="width: 150px;">Modo guiado</button>
     </div>
 
+    <button id="btn-modo-guiado" style="width:100%;min-height:52px;font-size:15px;letter-spacing:.2em;
+      background:linear-gradient(90deg,rgba(123,47,247,.6),rgba(62,197,255,.3));
+      border-color:rgba(62,197,255,.8);margin-bottom:var(--space-md);">
+      ▶ COMENZAR PASO A PASO
+    </button>
+
     <div class="panel">
-      <strong>Macros totales:</strong><br>
+      <strong>Macros:</strong>&nbsp;
       ${Math.round(macros.kcal)} kcal | P: ${Math.round(macros.proteina)}g | G: ${Math.round(macros.grasa)}g | C: ${Math.round(macros.carbo)}g
     </div>
   `;
 
   if (recetaActual.regla_especial) {
-    html += `<div class="panel panel--highlight" style="margin-top: var(--space-md);"><strong>⚠ Nota:</strong> ${recetaActual.regla_especial}</div>`;
-  }
-
-  if (ajuste && recetaActual.ajuste_fase1) {
-    html += `
-      <div class="panel" style="margin-top: var(--space-md); background: var(--clr-darker); border-left: 4px solid var(--clr-ambar);">
-        <strong>Ajuste Fase 1 (activo):</strong><br>
-        ${recetaActual.ajuste_fase1.descripcion}<br>
-        +${recetaActual.ajuste_fase1.delta_kcal} kcal
-      </div>
-    `;
+    html += `<div class="panel panel--highlight"><strong>⚠ Nota:</strong> ${recetaActual.regla_especial}</div>`;
   }
 
   html += `
-    <div style="margin-top: var(--space-lg);">
+    <div style="margin-top:var(--space-lg);">
       <h3>Ingredientes</h3>
       <table class="receta-table">
         <thead>
           <tr>
             <th>Ingrediente</th>
-            <th>Crudo</th>
-            <th style="text-align: right;">kcal</th>
-            <th style="text-align: right;">P</th>
-            <th style="text-align: right;">G</th>
-            <th style="text-align: right;">C</th>
+            <th>Cantidad</th>
+            <th style="text-align:right;">kcal</th>
           </tr>
         </thead>
         <tbody>
@@ -345,18 +340,15 @@ function mostrarReceta(recetaId) {
       <tr>
         <td>${ing.nombre}</td>
         <td>${ing.crudo}</td>
-        <td style="text-align: right;">${ing.kcal}</td>
-        <td style="text-align: right;">${ing.p}</td>
-        <td style="text-align: right;">${ing.g}</td>
-        <td style="text-align: right;">${ing.c}</td>
+        <td style="text-align:right;">${ing.kcal}</td>
       </tr>
     `;
   });
 
   html += `</tbody></table></div>`;
-
   container.innerHTML = html;
 
+  document.getElementById('btn-volver-receta').addEventListener('click', () => irAPanel('dashboard'));
   document.getElementById('btn-modo-guiado').addEventListener('click', () => {
     recetaGuiado = recetaActual;
     pasoActual = 0;
@@ -370,20 +362,26 @@ function renderizarPaso() {
 
   const pasos = pasosNormalizados(recetaGuiado);
   const paso = pasos[pasoActual];
+  const esUltimo = pasoActual === pasos.length - 1;
 
   document.getElementById('guiado-counter').textContent = `Paso ${paso.n} de ${pasos.length}`;
   document.getElementById('guiado-texto').textContent = paso.texto;
+
+  // Actualizar texto del botón siguiente en el último paso
+  const btnSig = document.getElementById('btn-paso-siguiente');
+  btnSig.textContent = esUltimo ? '✓ Completar quest' : 'Siguiente →';
+  btnSig.style.background = esUltimo
+    ? 'linear-gradient(180deg,rgba(65,240,166,.5),rgba(65,240,166,.2))'
+    : '';
+  btnSig.style.borderColor = esUltimo ? '#41f0a6' : '';
 
   const timerEl = document.getElementById('guiado-timer');
   if (paso.timer_segundos) {
     timerEl.classList.remove('hidden');
     timerEl.textContent = paso.timer_segundos;
 
-    // Auto-iniciar timer
     timer.iniciar(paso.timer_segundos, paso.texto, {
-      onTick: (segundos) => {
-        timerEl.textContent = segundos;
-      }
+      onTick: (segundos) => { timerEl.textContent = segundos; }
     });
   } else {
     timerEl.classList.add('hidden');
@@ -391,20 +389,16 @@ function renderizarPaso() {
   }
 }
 
+// ============ BATCH ============
+
 function renderizarBatch() {
   const container = document.getElementById('batch-content');
   const diaDelMes = getDiaDelMes();
   const tareas = [];
 
-  if (diaDelMes === 'domingo') {
-    tareas.push(getBatchCooking('domingo_noche'));
-  }
-  if (diaDelMes === 'miercoles') {
-    tareas.push(getBatchCooking('miercoles_noche'));
-  }
-  if (tareas.length === 0) {
-    tareas.push(...getBatchCookingList());
-  }
+  if (diaDelMes === 'domingo') tareas.push(getBatchCooking('domingo_noche'));
+  if (diaDelMes === 'miercoles') tareas.push(getBatchCooking('miercoles_noche'));
+  if (tareas.length === 0) tareas.push(...getBatchCookingList());
 
   let html = '';
   tareas.forEach(batch => {
@@ -413,18 +407,18 @@ function renderizarBatch() {
         <h3>${batch.titulo}</h3>
         ${batch.tiempo_min ? `<p class="text-secondary">⏱ ${batch.tiempo_min} min</p>` : ''}
         ${batch.nota ? `<p class="text-secondary"><em>${batch.nota}</em></p>` : ''}
-        <div style="margin-top: var(--space-md);">
+        <div style="margin-top:var(--space-md);">
           ${batch.tareas.map((tarea, i) => `
-            <div style="padding: var(--space-sm); background: var(--clr-darker); margin-bottom: var(--space-sm); border-radius: 2px;">
+            <div style="padding:var(--space-sm);background:var(--clr-darker);margin-bottom:var(--space-sm);border-radius:2px;">
               <strong>${i + 1}.</strong> ${tarea.texto || tarea}
-              ${tarea.timer_segundos ? `<div class="text-secondary" style="font-size: 12px; margin-top: 4px;">⏱ ${tarea.timer_segundos}s</div>` : ''}
+              ${tarea.timer_segundos ? `<div class="text-secondary" style="font-size:12px;margin-top:4px;">⏱ ${tarea.timer_segundos}s</div>` : ''}
             </div>
           `).join('')}
         </div>
         ${batch.almacenamiento ? `
-          <div style="margin-top: var(--space-lg); padding: var(--space-md); background: var(--clr-darker); border-left: 4px solid var(--clr-cian);">
+          <div style="margin-top:var(--space-lg);padding:var(--space-md);background:var(--clr-darker);border-left:4px solid var(--clr-cian);">
             <strong>Almacenamiento:</strong>
-            <ul style="margin: var(--space-sm) 0; padding-left: 20px;">
+            <ul style="margin:var(--space-sm) 0;padding-left:20px;">
               ${batch.almacenamiento.map(item => `<li>${item}</li>`).join('')}
             </ul>
           </div>
@@ -435,6 +429,8 @@ function renderizarBatch() {
 
   container.innerHTML = html;
 }
+
+// ============ MERCADO ============
 
 function renderizarMercado() {
   const container = document.getElementById('mercado-content');
@@ -449,13 +445,13 @@ function renderizarMercado() {
         <div class="mercado-item__info">
           <strong>${item.producto}</strong> — ${item.cantidad}<br>
           <span class="mercado-item__precio">~$${item.precio_ck?.toLocaleString()}</span>
-          ${item.nota ? `<div class="text-secondary" style="font-size: 12px; margin-top: 4px;">${item.nota}</div>` : ''}
+          ${item.nota ? `<div class="text-secondary" style="font-size:12px;margin-top:4px;">${item.nota}</div>` : ''}
         </div>
       </div>
     `;
   });
 
-  html += `<h3 style="margin-top: var(--space-lg);">Mensual (no perecederos)</h3>`;
+  html += `<h3 style="margin-top:var(--space-lg);">Mensual (no perecederos)</h3>`;
   MERCADO.mensual_no_perecederos.forEach(item => {
     const marcado = checklist[`mensual_${item.id}`] || false;
     html += `
@@ -464,44 +460,41 @@ function renderizarMercado() {
         <div class="mercado-item__info">
           <strong>${item.producto}</strong> — ${item.cantidad}<br>
           <span class="mercado-item__precio">~$${item.precio_ck?.toLocaleString()}</span>
-          ${item.nota ? `<div class="text-secondary" style="font-size: 12px; margin-top: 4px;">${item.nota}</div>` : ''}
+          ${item.nota ? `<div class="text-secondary" style="font-size:12px;margin-top:4px;">${item.nota}</div>` : ''}
         </div>
       </div>
     `;
   });
 
   html += `
-    <div class="panel" style="margin-top: var(--space-lg); border-left: 4px solid var(--clr-cian);">
+    <div class="panel" style="margin-top:var(--space-lg);border-left:4px solid var(--clr-cian);">
       <strong>Presupuesto mensual:</strong><br>
       Escenario A (Éxito): ~$${MERCADO.presupuesto_info.total_escenario_a.toLocaleString()}<br>
       Escenario B (D1/Ara): ~$${MERCADO.presupuesto_info.total_escenario_b.toLocaleString()}<br>
       Tope máximo: $${MERCADO.presupuesto_info.tope_maximo.toLocaleString()}<br>
-      <p class="text-secondary" style="font-size: 12px; margin-top: var(--space-sm);">${MERCADO.presupuesto_info.recomendacion}</p>
+      <p class="text-secondary" style="font-size:12px;margin-top:var(--space-sm);">${MERCADO.presupuesto_info.recomendacion}</p>
     </div>
   `;
 
   container.innerHTML = html;
 
-  // Event listeners
   container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener('change', () => {
-      store.alternarItemMercado(cb.dataset.item);
-    });
+    cb.addEventListener('change', () => { store.alternarItemMercado(cb.dataset.item); });
   });
 }
+
+// ============ PROGRESO ============
 
 function renderizarProgreso() {
   const container = document.getElementById('progreso-content');
   const progXp = store.obtenerProgresoNivel(store.data.xp);
   const fase = getFaseActiva();
 
-  let html = `
+  container.innerHTML = `
     <div class="panel">
-      <div style="text-align: center; margin-bottom: var(--space-lg);">
-        <div style="font-size: 64px; font-weight: bold; color: var(--clr-cian);">Lv.${progXp.nivel}</div>
-        <div style="color: var(--clr-text-secondary); margin-top: var(--space-md);">
-          ${store.data.xp} XP
-        </div>
+      <div style="text-align:center;margin-bottom:var(--space-lg);">
+        <div style="font-size:64px;font-weight:bold;color:var(--clr-cian);">Lv.${progXp.nivel}</div>
+        <div style="color:var(--clr-text-secondary);margin-top:var(--space-md);">${store.data.xp} XP total</div>
       </div>
     </div>
 
@@ -512,43 +505,43 @@ function renderizarProgreso() {
       ${fase.macros_meta ? `<br>P: ${fase.macros_meta.proteina_g}g | G: ${fase.macros_meta.grasa_g}g | C: ${fase.macros_meta.carbo_g}g` : '<br><em>Pendiente de definir</em>'}
     </div>
 
-    <div class="panel" style="margin-top: var(--space-lg);">
+    <div class="panel" style="margin-top:var(--space-lg);">
       <strong>Historial reciente:</strong>
-      <div style="font-size: 12px; margin-top: var(--space-md);">
+      <div style="font-size:12px;margin-top:var(--space-md);">
         ${store.data.historial.slice(-5).reverse().map(h => `
-          <div style="padding: 4px 0; border-bottom: 1px solid var(--clr-border);">
+          <div style="padding:4px 0;border-bottom:1px solid var(--clr-border);">
             <strong>${h.fecha}</strong> — ${h.tipo} (${h.kcal} kcal)
           </div>
         `).join('') || '<em>Sin historial</em>'}
       </div>
     </div>
   `;
-
-  container.innerHTML = html;
 }
+
+// ============ AJUSTES ============
 
 function renderizarAjustes() {
   const container = document.getElementById('ajustes-content');
   const ajustes = store.data.ajustes;
 
-  const html = `
+  container.innerHTML = `
     <div class="panel">
       <label>
         <input type="checkbox" ${ajustes.notificaciones_habilitadas ? 'checked' : ''} data-ajuste="notificaciones_habilitadas">
         Notificaciones habilitadas
       </label>
 
-      <label style="margin-top: var(--space-md);">
+      <label style="margin-top:var(--space-md);">
         Hora del batch cooking:
-        <input type="time" id="batch-hora" value="${ajustes.batch_cooking_hora}" style="width: 150px; margin-left: var(--space-sm);">
+        <input type="time" id="batch-hora" value="${ajustes.batch_cooking_hora}" style="width:150px;margin-left:var(--space-sm);">
       </label>
 
-      <label style="margin-top: var(--space-md);">
+      <label style="margin-top:var(--space-md);">
         <input type="checkbox" ${ajustes.ajuste_fase1 ? 'checked' : ''} data-ajuste="ajuste_fase1">
         Ajuste Fase 1 (+20g arroz en almuerzos)
       </label>
 
-      <fieldset style="margin-top: var(--space-lg); padding: var(--space-md); border: 1px solid var(--clr-border); border-radius: 2px;">
+      <fieldset style="margin-top:var(--space-lg);padding:var(--space-md);border:1px solid var(--clr-border);border-radius:2px;">
         <legend>Alertas de timer</legend>
         <label><input type="checkbox" ${ajustes.alerta_timer_sonido ? 'checked' : ''} data-ajuste="alerta_timer_sonido"> Sonido</label>
         <label><input type="checkbox" ${ajustes.alerta_timer_overlay ? 'checked' : ''} data-ajuste="alerta_timer_overlay"> Overlay visual</label>
@@ -556,21 +549,18 @@ function renderizarAjustes() {
         <label><input type="checkbox" ${ajustes.alerta_timer_voz ? 'checked' : ''} data-ajuste="alerta_timer_voz"> Voz</label>
       </fieldset>
 
-      <div style="margin-top: var(--space-lg);">
-        <button id="btn-exportar" style="width: 100%;">Exportar datos (.json)</button>
-        <input type="file" id="import-file" accept=".json" style="display: none;">
-        <button id="btn-importar" style="width: 100%; margin-top: var(--space-md);">Importar backup</button>
+      <div style="margin-top:var(--space-lg);">
+        <button id="btn-exportar" style="width:100%;">Exportar datos (.json)</button>
+        <input type="file" id="import-file" accept=".json" style="display:none;">
+        <button id="btn-importar" style="width:100%;margin-top:var(--space-md);">Importar backup</button>
       </div>
 
-      <div style="margin-top: var(--space-lg); font-size: 12px; color: var(--clr-text-secondary);">
+      <div style="margin-top:var(--space-lg);font-size:12px;color:var(--clr-text-secondary);">
         Versión 1.0 | Último backup: ${ajustes.ultimo_backup ? new Date(ajustes.ultimo_backup).toLocaleString() : 'nunca'}
       </div>
     </div>
   `;
 
-  container.innerHTML = html;
-
-  // Event listeners para ajustes
   container.querySelectorAll('[data-ajuste]').forEach(el => {
     el.addEventListener('change', () => {
       const key = el.dataset.ajuste;
@@ -579,12 +569,10 @@ function renderizarAjustes() {
     });
   });
 
-  // Batch cooking hora
   document.getElementById('batch-hora').addEventListener('change', (e) => {
     store.actualizarAjuste('batch_cooking_hora', e.target.value);
   });
 
-  // Export
   document.getElementById('btn-exportar').addEventListener('click', () => {
     const { filename, json } = store.exportar();
     const blob = new Blob([json], { type: 'application/json' });
@@ -596,7 +584,6 @@ function renderizarAjustes() {
     URL.revokeObjectURL(url);
   });
 
-  // Import
   document.getElementById('btn-importar').addEventListener('click', () => {
     document.getElementById('import-file').click();
   });
@@ -609,7 +596,7 @@ function renderizarAjustes() {
         const success = store.importar(ev.target.result);
         if (success) {
           alert('✓ Backup importado exitosamente');
-          renderizarAjustes(); // Refresh
+          renderizarAjustes();
         } else {
           alert('✗ Error al importar backup');
         }
@@ -618,6 +605,8 @@ function renderizarAjustes() {
     }
   });
 }
+
+// ============ QUESTS / LEVEL UP ============
 
 function completarQuest(tipoQuest, recetaData) {
   const hoy = new Date();
@@ -638,34 +627,28 @@ function completarQuest(tipoQuest, recetaData) {
 function mostrarLevelUp(nuevoNivel) {
   const overlay = document.createElement('div');
   overlay.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(5, 8, 16, 0.95);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 99999;
-    animation: fadeIn 0.3s ease-out;
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(5,8,16,0.95);
+    display:flex;align-items:center;justify-content:center;
+    z-index:99999;
   `;
 
   overlay.innerHTML = `
-    <div style="text-align: center; animation: slideUp 2.5s ease-out;">
-      <div style="font-size: 24px; color: var(--clr-morado); margin-bottom: 20px;">━━━━━━━━━━</div>
-      <div style="font-size: 64px; font-weight: bold; color: var(--clr-cian); letter-spacing: 3px; text-transform: uppercase; animation: glow 1s ease-in-out;">
+    <div style="text-align:center;">
+      <div style="font-size:24px;color:var(--clr-morado);">━━━━━━━━━━</div>
+      <div style="font-size:64px;font-weight:bold;color:var(--clr-cian);letter-spacing:3px;text-transform:uppercase;">
         LEVEL UP
       </div>
-      <div style="font-size: 48px; font-weight: bold; color: var(--clr-ambar); margin-top: 30px;">
+      <div style="font-size:48px;font-weight:bold;color:var(--clr-ambar);margin-top:30px;">
         Lv.${nuevoNivel}
       </div>
-      <div style="font-size: 14px; color: var(--clr-text-secondary); margin-top: 20px;">
-        ✦ Hunter en ascenso ✦
-      </div>
-      <div style="font-size: 24px; color: var(--clr-morado); margin-top: 30px;">━━━━━━━━━━</div>
+      <div style="font-size:14px;color:var(--clr-text-secondary);margin-top:20px;">✦ Hunter en ascenso ✦</div>
+      <div style="font-size:24px;color:var(--clr-morado);margin-top:30px;">━━━━━━━━━━</div>
     </div>
   `;
 
   document.body.appendChild(overlay);
-
-  setTimeout(() => {
-    overlay.remove();
-  }, 2500);
+  setTimeout(() => overlay.remove(), 2500);
 }
 
 // Iniciar
