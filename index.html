@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#050810">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="◆ RECETARIO">
+  <title>◆ SISTEMA — Recetario Operativo</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23050810'/><text x='50%' y='50%' font-size='80' fill='%234da6ff' text-anchor='middle' dominant-baseline='middle' font-family='monospace' font-weight='bold'>◆</text></svg>">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <style>
+    .screen { display: none; }
+    .screen.active { display: flex; flex-direction: column; flex: 1; overflow-y: auto; padding: var(--space-md); }
+
+    #nav { display: flex; gap: var(--space-sm); padding: var(--space-md); background: var(--clr-darker); border-top: 1px solid var(--clr-border); flex-wrap: wrap; }
+    #nav button { flex: 1; min-width: 80px; font-size: 12px; }
+
+    @media (min-width: 900px) {
+      .dashboard-layout { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); }
+    }
+
+    .stat-block { background: var(--clr-darker); padding: var(--space-md); border: 1px solid var(--clr-border); border-radius: 2px; text-align: center; }
+    .stat-block__value { font-size: 36px; font-weight: bold; color: var(--clr-cian); }
+    .stat-block__label { font-size: 12px; color: var(--clr-text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-top: var(--space-xs); }
+
+    .quest-card { background: var(--clr-panel); padding: var(--space-md); border-left: 4px solid var(--clr-cian); margin-bottom: var(--space-md); display: flex; justify-content: space-between; align-items: center; min-height: var(--min-touch); }
+    .quest-card--completada { border-left-color: var(--clr-verde); opacity: 0.7; }
+    .quest-card__info { flex: 1; }
+    .quest-card__check { width: 32px; height: 32px; border: 2px solid var(--clr-cian); cursor: pointer; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .quest-card__check--checked { background: var(--clr-verde); border-color: var(--clr-verde); color: var(--clr-dark); }
+
+    .receta-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: var(--space-md) 0; }
+    .receta-table th { background: var(--clr-darker); padding: var(--space-sm); text-align: left; font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; }
+    .receta-table td { padding: var(--space-sm); border-bottom: 1px solid var(--clr-border); }
+    .receta-table tr:hover { background: var(--clr-darker); }
+
+    .step-container { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: var(--space-lg); text-align: center; }
+    .step-number { font-size: 12px; color: var(--clr-text-secondary); }
+    .step-text { font-size: 24px; line-height: 1.4; color: var(--clr-text-primary); }
+    .step-timer { font-size: 48px; font-weight: bold; color: var(--clr-cian); font-family: var(--font-mono); }
+    .step-controls { display: flex; gap: var(--space-md); width: 100%; }
+    .step-controls button { flex: 1; }
+
+    .mercado-item { display: flex; gap: var(--space-md); align-items: flex-start; padding: var(--space-md); border-bottom: 1px solid var(--clr-border); }
+    .mercado-item__check { flex-shrink: 0; }
+    .mercado-item__info { flex: 1; }
+    .mercado-item__precio { color: var(--clr-ambar); font-weight: bold; }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- SCREEN: Onboarding -->
+    <div id="screen-onboarding" class="screen active">
+      <div class="panel panel--highlight" style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: var(--space-lg);">
+        <div style="text-align: center;">
+          <div style="font-size: 48px; margin-bottom: var(--space-lg);">◆</div>
+          <h1>SISTEMA</h1>
+          <p class="text-secondary" style="margin: var(--space-md) 0;">Recetario Operativo — Fase 1</p>
+        </div>
+
+        <div id="onboarding-content">
+          <p>Bienvenida/o, Hunter. Esta PWA se instala en tu pantalla de inicio y funciona sin conexión.</p>
+          <p id="install-instructions" class="text-secondary" style="margin: var(--space-md) 0; font-size: 14px;"></p>
+        </div>
+
+        <button id="btn-onboarding-continue" style="width: 100%; min-height: 48px;">Comenzar</button>
+      </div>
+    </div>
+
+    <!-- SCREEN: Dashboard -->
+    <div id="screen-dashboard" class="screen">
+      <div class="dashboard-layout">
+        <!-- Left: Quests del día -->
+        <div>
+          <h2>Quests de hoy</h2>
+          <div id="quests-list"></div>
+        </div>
+
+        <!-- Right: Hunter stats -->
+        <div>
+          <div class="stat-block">
+            <div class="stat-block__label">Nivel</div>
+            <div class="stat-block__value" id="hunter-nivel">1</div>
+          </div>
+
+          <div class="stat-block" style="margin-top: var(--space-md);">
+            <div class="stat-block__label">XP</div>
+            <div id="xp-info" style="font-size: 14px; margin-top: var(--space-sm);">0 / 100</div>
+            <div class="progress-bar">
+              <div class="progress-bar__fill" id="xp-bar" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="stat-block" style="margin-top: var(--space-md);">
+            <div class="stat-block__label">Racha</div>
+            <div class="stat-block__value" id="hunter-racha" style="color: var(--clr-ambar);">0</div>
+          </div>
+
+          <div class="stat-block" style="margin-top: var(--space-md);">
+            <div class="stat-block__label">Totales de hoy</div>
+            <div id="totales-hoy" style="font-size: 12px; margin-top: var(--space-sm); line-height: 1.8;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN: Detalle de receta -->
+    <div id="screen-receta" class="screen">
+      <div id="receta-content"></div>
+    </div>
+
+    <!-- SCREEN: Modo guiado -->
+    <div id="screen-guiado" class="screen">
+      <div class="step-container">
+        <div class="step-number" id="guiado-counter"></div>
+        <div class="step-text" id="guiado-texto"></div>
+        <div class="step-timer hidden" id="guiado-timer"></div>
+        <div class="step-controls">
+          <button id="btn-paso-anterior">← Anterior</button>
+          <button id="btn-paso-siguiente">Siguiente →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN: Batch cooking -->
+    <div id="screen-batch" class="screen">
+      <h2>Preparación en lote</h2>
+      <div id="batch-content"></div>
+    </div>
+
+    <!-- SCREEN: Lista de mercado -->
+    <div id="screen-mercado" class="screen">
+      <h2>Lista de mercado</h2>
+      <div id="mercado-content"></div>
+    </div>
+
+    <!-- SCREEN: Progreso -->
+    <div id="screen-progreso" class="screen">
+      <h2>Progreso</h2>
+      <div id="progreso-content"></div>
+    </div>
+
+    <!-- SCREEN: Ajustes -->
+    <div id="screen-ajustes" class="screen">
+      <h2>Ajustes</h2>
+      <div id="ajustes-content"></div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div id="nav">
+    <button data-screen="dashboard">Dashboard</button>
+    <button data-screen="batch">Batch</button>
+    <button data-screen="mercado">Mercado</button>
+    <button data-screen="progreso">Progreso</button>
+    <button data-screen="ajustes">Ajustes</button>
+  </div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

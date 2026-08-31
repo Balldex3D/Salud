@@ -1,0 +1,38 @@
+# Secrets
+.env.local
+.env.*.local
+secrets.json
+vapid-keys.json
+worker/wrangler.local.toml
+
+# Dependencies (si alguna vez instalamos)
+node_modules/
+package-lock.json
+yarn.lock
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Backups
+*.bak
+*.backup
+*~
+
+# Temporal
+*.tmp
+.tmp/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*

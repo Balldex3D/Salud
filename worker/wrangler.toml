@@ -1,0 +1,17 @@
+name = "recetario-worker"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# KV namespace para almacenar suscripciones
+[[kv_namespaces]]
+binding = "SUSCRIPCIONES"
+id = "tu_kv_namespace_id"
+preview_id = "tu_kv_preview_id"
+
+# Cron trigger: cada minuto
+[[triggers.crons]]
+cron = "* * * * *"
+
+# Secrets
+# Agregar VAPID_PRIVATE_KEY en production
+# wrangler secret put VAPID_PRIVATE_KEY

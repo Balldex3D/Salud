@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Generador VAPID</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #050810;
+      color: #f0f4f8;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    button {
+      background: #4da6ff;
+      color: #050810;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 2px;
+    }
+    button:hover { background: #8b5cf6; }
+    .output {
+      background: #0a1428;
+      border: 1px solid #4da6ff;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 2px;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+    .label { color: #8b5cf6; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>◆ VAPID Key Generator</h1>
+  <p>Genera un par de llaves P-256 para Web Push en Cloudflare.</p>
+
+  <button onclick="generarVAPID()">Generar llaves VAPID</button>
+
+  <div id="output"></div>
+
+  <script>
+    // Utility: base64url encode
+    function base64urlEncode(buf) {
+      return btoa(String.fromCharCode(...new Uint8Array(buf)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+    }
+
+    async function generarVAPID() {
+      try {
+        const keyPair = await crypto.subtle.generateKey(
+          {
+            name: 'ECDSA',
+            namedCurve: 'P-256'
+          },
+          true,
+          ['sign', 'verify']
+        );
+
+        // Exportar public key
+        const publicKeyJwk = await crypto.subtle.exportKey('jwk', keyPair.publicKey);
+        const publicKeyRaw = await crypto.subtle.exportKey('raw', keyPair.publicKey);
+        const publicKeyBase64 = base64urlEncode(publicKeyRaw);
+
+        // Exportar private key
+        const privateKeyJwk = await crypto.subtle.exportKey('jwk', keyPair.privateKey);
+        const privateKeyBase64 = base64urlEncode(
+          await crypto.subtle.exportKey('raw', keyPair.privateKey)
+        );
+
+        const output = document.getElementById('output');
+        output.innerHTML = `
+          <h2>✓ Llaves generadas</h2>
+
+          <div class="output">
+<span class="label">PUBLIC KEY:</span>
+${publicKeyBase64}
+          </div>
+
+          <div class="output">
+<span class="label">PRIVATE KEY (guardar en Cloudflare como secret VAPID_PRIVATE_KEY):</span>
+${privateKeyBase64}
+          </div>
+
+          <div class="output">
+<span class="label">Para el cliente (en js/core/push.js):</span>
+const VAPID_PUBLIC = '${publicKeyBase64}';
+          </div>
+
+          <h3>Pasos siguientes:</h3>
+          <ol>
+            <li>Copia la PRIVATE KEY</li>
+            <li>En Cloudflare Workers, crea un secret "VAPID_PRIVATE_KEY" con ese valor</li>
+            <li>Actualiza VAPID_PUBLIC en el código de la app</li>
+            <li>Despliega el Worker</li>
+          </ol>
+        `;
+      } catch (e) {
+        document.getElementById('output').innerHTML = `<div class="output">Error: ${e.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>
