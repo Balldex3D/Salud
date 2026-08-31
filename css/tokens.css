@@ -72,10 +72,7 @@ html, body {
   margin: 0;
   padding: 0;
   background: var(--clr-dark);
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(123,47,247,.16), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(62,197,255,.08), transparent 60%);
-  background-attachment: fixed;
+  /* background-attachment:fixed rompe en iOS Safari — usar pseudo-elemento o nada */
   color: var(--clr-text-primary);
   font-family: var(--font-system);
   font-size: 16px;
@@ -89,7 +86,24 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  /* Fondo degradado fijo que funciona en iOS */
+  background: var(--clr-dark);
 }
+
+/* Gradiente decorativo: pseudo-elemento para evitar background-attachment:fixed en iOS */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(123,47,247,.16), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(62,197,255,.08), transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#app { position: relative; z-index: 1; }
+#nav { position: relative; z-index: 1; }
 
 #app {
   flex: 1;
@@ -98,24 +112,46 @@ body {
   flex-direction: column;
 }
 
-/* Panels y contenedores — estilo Solo Leveling */
+/* ── Panel base — compatible con todos los browsers incluyendo Safari iOS ── */
+.panel {
+  background: linear-gradient(180deg, rgba(15,22,48,.97), rgba(9,13,28,.98));
+  border: 1px solid rgba(62,197,255,.35);
+  border-radius: 2px;
+  padding: var(--space-md);
+  box-shadow: 0 0 14px rgba(62,197,255,.1), 0 0 3px rgba(123,47,247,.15);
+  margin-bottom: var(--space-md);
+}
+
+.panel--highlight {
+  border-color: rgba(123,47,247,.6);
+  box-shadow: 0 0 14px rgba(123,47,247,.2);
+}
+
+/* ── Wrapper Solo Leveling con borde degradado ──
+   El clip-path en .sys-panel-wrap es puramente decorativo (no contiene
+   botones ni interactivos propios), así que si falla en algún Safari
+   antiguo solo pierde el ángulo cortado — no rompe funcionalidad.
+   .sl-inner usa valores hardcoded (sin CSS vars) para mayor compatibilidad. */
 .sys-panel-wrap {
   padding: 1px;
   background: linear-gradient(160deg, rgba(62,197,255,.85), rgba(123,47,247,.55) 45%, rgba(62,197,255,.22));
-  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+  border-radius: 2px;
+  /* clip-path con valores hardcoded — evita bug de CSS vars en clip-path en Safari */
+  -webkit-clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
   filter: drop-shadow(0 0 12px rgba(62,197,255,.14)) drop-shadow(0 0 3px rgba(123,47,247,.25));
   margin-bottom: var(--space-md);
 }
 
-.panel {
+/* Panel interior dentro de sys-panel-wrap — hereda el corte del padre */
+.sys-panel-wrap .panel {
   background: linear-gradient(180deg, rgba(15,22,48,.97), rgba(9,13,28,.98));
-  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
-  padding: var(--space-md);
   border: none;
-}
-
-.panel--highlight {
-  /* dentro de un sys-panel-wrap con gradiente violet dominante */
+  border-radius: 0;
+  box-shadow: none;
+  margin-bottom: 0;
+  -webkit-clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
 }
 
 /* Sys-tag: la etiqueta de sección decorativa */
@@ -187,7 +223,7 @@ h3 { font-size: 18px; }
 .badge--rango-b { background: var(--clr-rango-b); color: white; }
 .badge--rango-c { background: var(--clr-rango-c); color: white; }
 
-/* Buttons — estilo Solo Leveling */
+/* Buttons — estilo Solo Leveling, sin clip-path (rompe hit-testing en Safari iOS) */
 button, .btn {
   min-height: var(--min-touch);
   padding: var(--space-sm) var(--space-md);
@@ -201,8 +237,9 @@ button, .btn {
   letter-spacing: 0.15em;
   cursor: pointer;
   transition: all 0.2s ease;
-  clip-path: polygon(9px 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
+  border-radius: 2px;
   text-shadow: 0 0 8px rgba(62,197,255,.6);
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:hover, .btn:hover {
@@ -231,7 +268,6 @@ button:active, .btn:active {
   padding: var(--space-xs) var(--space-sm);
   font-size: 12px;
   min-height: 32px;
-  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
 }
 
 /* Forms */

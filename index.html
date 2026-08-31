@@ -28,8 +28,7 @@
     #nav::-webkit-scrollbar { display: none; }
     #nav button {
       flex: 1; min-width: 68px; font-size: 11px; letter-spacing: .12em;
-      padding: 8px 6px; min-height: 40px;
-      clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%);
+      padding: 8px 6px; min-height: 40px; border-radius: 2px;
     }
 
     @media (min-width: 900px) {
@@ -73,8 +72,8 @@
       border: 1px solid rgba(62,197,255,.25); color: var(--clr-text-secondary);
       font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 14px;
       letter-spacing: .2em; text-transform: uppercase; cursor: pointer;
-      transition: all .25s; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
-      min-height: 44px;
+      transition: all .25s; border-radius: 2px;
+      min-height: 44px; -webkit-tap-highlight-color: transparent;
     }
     .ej-tab-active {
       background: linear-gradient(180deg, rgba(123,47,247,.35), rgba(62,197,255,.15));
@@ -92,8 +91,8 @@
     .ej-check-item:hover { background: rgba(62,197,255,.05); }
     .ej-check-box {
       width: 19px; height: 19px; flex: none; border: 1px solid #3ec5ff;
-      position: relative; clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
-      background: #0b1226; transition: all .2s;
+      position: relative; border-radius: 2px;
+      background: #0b1226; transition: all .2s; flex-shrink: 0;
     }
     .ej-check-item.checked .ej-check-box {
       background: linear-gradient(135deg, #7b2ff7, #3ec5ff);
