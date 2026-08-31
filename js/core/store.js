@@ -15,7 +15,15 @@ export class Store {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        // Migrar: garantizar que campos de ejercicio existan en datos previos
+        if (!parsed.ejercicio_stats) {
+          parsed.ejercicio_stats = { fuerza: 0, resistencia: 0, agilidad: 0, vitalidad: 0 };
+        }
+        if (!parsed.ejercicio_historial) parsed.ejercicio_historial = [];
+        if (!('ejercicio_hoy' in parsed)) parsed.ejercicio_hoy = null;
+        if (!('ejercicio_rest_timer' in parsed)) parsed.ejercicio_rest_timer = null;
+        return parsed;
       } catch (e) {
         console.error('Error parsing stored data:', e);
       }
@@ -33,14 +41,26 @@ export class Store {
       mercado_checklist: {}, // { 'semanal_0': true, 'mensual_3': false, ... }
       ajustes: {
         notificaciones_habilitadas: true,
-        batch_cooking_hora: '20:00', // Hora del batch cooking (configurable)
-        ajuste_fase1: true, // Toggle: sumar +20g arroz en almuerzos específicos
+        batch_cooking_hora: '20:00',
+        ajuste_fase1: true,
         alerta_timer_sonido: true,
         alerta_timer_overlay: true,
         alerta_timer_notif: true,
         alerta_timer_voz: true
       },
-      ultimo_backup: null
+      ultimo_backup: null,
+
+      // ── Ejercicio ──────────────────────────────────────────────
+      ejercicio_stats: {
+        fuerza:      0,
+        resistencia: 0,
+        agilidad:    0,
+        vitalidad:   0,
+      },
+      // Progreso del día de ejercicio actual
+      ejercicio_hoy: null, // { date, questId, checks: {}, sets: {exId: [reps]}, complete }
+      ejercicio_historial: [], // { date, questId, questName, sets, complete }
+      ejercicio_rest_timer: null, // { endAt, seconds, label }
     };
   }
 
@@ -193,6 +213,80 @@ export class Store {
       return false;
     }
   }
+
+  // ── Gamificación: Ejercicio ────────────────────────────────────
+
+  /**
+   * Registra una serie completada de ejercicio.
+   * Suma XP global + incrementa stat de ejercicio.
+   * @param {string} statKey - 'fuerza' | 'resistencia' | 'agilidad' | 'vitalidad'
+   * @param {number} statGain - cuántos puntos sube el stat
+   * @param {number} xpGain - cuántos XP globales suma
+   * @returns {{ levelUp: boolean, nuevoNivel: number }}
+   */
+  registrarSerie(statKey, statGain, xpGain) {
+    this.data.ejercicio_stats[statKey] = (this.data.ejercicio_stats[statKey] || 0) + statGain;
+    this.data.xp += xpGain;
+
+    const nivelAnterior = this.data.nivel;
+    this.data.nivel = this.calcularNivel(this.data.xp);
+    this.save();
+
+    return {
+      levelUp: this.data.nivel > nivelAnterior,
+      nuevoNivel: this.data.nivel,
+    };
+  }
+
+  /**
+   * Registra la finalización del bonus de quest de ejercicio.
+   * @param {string} statKey
+   * @param {number} statGain
+   * @param {number} xpGain
+   * @param {string} fecha - 'YYYY-MM-DD'
+   * @returns {{ levelUp: boolean, nuevoNivel: number }}
+   */
+  registrarBonusEjercicio(statKey, statGain, xpGain, fecha) {
+    this.data.ejercicio_stats[statKey] = (this.data.ejercicio_stats[statKey] || 0) + statGain;
+    this.data.xp += xpGain;
+
+    // Racha de ejercicio: si no hay racha activa o la última fecha no es consecutiva,
+    // se actualiza correctamente con calcularRacha de cocina.
+    // Por ahora solo actualizamos la fecha de última misión completada.
+    this.data.ultima_fecha_completada = fecha;
+
+    const nivelAnterior = this.data.nivel;
+    this.data.nivel = this.calcularNivel(this.data.xp);
+    this.save();
+
+    return {
+      levelUp: this.data.nivel > nivelAnterior,
+      nuevoNivel: this.data.nivel,
+    };
+  }
+
+  /**
+   * Guarda el estado actual del día de ejercicio.
+   */
+  guardarEjercicioHoy(estadoHoy) {
+    this.data.ejercicio_hoy = estadoHoy;
+    this.save();
+  }
+
+  /**
+   * Agrega o actualiza una entrada en el historial de ejercicio.
+   */
+  upsertHistorialEjercicio(entrada) {
+    const idx = this.data.ejercicio_historial.findIndex(h => h.date === entrada.date);
+    if (idx >= 0) {
+      this.data.ejercicio_historial[idx] = entrada;
+    } else {
+      this.data.ejercicio_historial.push(entrada);
+    }
+    this.save();
+  }
+
+  // ── Persistencia (Safari ITP mitigation) ──────────────────────
 
   // Persistencia (Safari ITP mitigation)
   async solicitarPersistencia() {

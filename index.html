@@ -10,13 +10,27 @@
   <title>◆ SISTEMA — Recetario Operativo</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23050810'/><text x='50%' y='50%' font-size='80' fill='%234da6ff' text-anchor='middle' dominant-baseline='middle' font-family='monospace' font-weight='bold'>◆</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/tokens.css">
   <style>
     .screen { display: none; }
     .screen.active { display: flex; flex-direction: column; flex: 1; overflow-y: auto; padding: var(--space-md); }
 
-    #nav { display: flex; gap: var(--space-sm); padding: var(--space-md); background: var(--clr-darker); border-top: 1px solid var(--clr-border); flex-wrap: wrap; }
-    #nav button { flex: 1; min-width: 80px; font-size: 12px; }
+    #nav {
+      display: flex; gap: 6px; padding: 10px var(--space-md);
+      background: rgba(13,20,48,.97);
+      border-top: 1px solid rgba(62,197,255,.3);
+      flex-wrap: nowrap; overflow-x: auto;
+      scrollbar-width: none;
+    }
+    #nav::-webkit-scrollbar { display: none; }
+    #nav button {
+      flex: 1; min-width: 68px; font-size: 11px; letter-spacing: .12em;
+      padding: 8px 6px; min-height: 40px;
+      clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%);
+    }
 
     @media (min-width: 900px) {
       .dashboard-layout { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); }
@@ -52,6 +66,79 @@
     @media (prefers-reduced-motion: reduce) {
       * { animation: none !important; transition: none !important; }
     }
+
+    /* ── Ejercicio: Tabs ── */
+    .ej-tab {
+      flex: 1; padding: 11px 8px; background: #0e1530;
+      border: 1px solid rgba(62,197,255,.25); color: var(--clr-text-secondary);
+      font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 14px;
+      letter-spacing: .2em; text-transform: uppercase; cursor: pointer;
+      transition: all .25s; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+      min-height: 44px;
+    }
+    .ej-tab-active {
+      background: linear-gradient(180deg, rgba(123,47,247,.35), rgba(62,197,255,.15));
+      color: #fff; border-color: #3ec5ff; text-shadow: 0 0 10px rgba(62,197,255,.9);
+    }
+    .ej-tab:hover { color: #fff; }
+
+    /* ── Ejercicio: Checkboxes ── */
+    .ej-check-item {
+      display: flex; align-items: center; gap: 12px; padding: 9px 6px;
+      cursor: pointer; user-select: none;
+      border-bottom: 1px solid rgba(62,197,255,.08); transition: background .2s;
+    }
+    .ej-check-item:last-child { border-bottom: none; }
+    .ej-check-item:hover { background: rgba(62,197,255,.05); }
+    .ej-check-box {
+      width: 19px; height: 19px; flex: none; border: 1px solid #3ec5ff;
+      position: relative; clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+      background: #0b1226; transition: all .2s;
+    }
+    .ej-check-item.checked .ej-check-box {
+      background: linear-gradient(135deg, #7b2ff7, #3ec5ff);
+      box-shadow: 0 0 10px rgba(62,197,255,.8);
+    }
+    .ej-check-item.checked .ej-check-box::after {
+      content: "✓"; position: absolute; inset: 0; display: flex;
+      align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700;
+    }
+    .ej-check-label { font-size: 14px; color: var(--clr-text-primary); }
+    .ej-check-item.checked .ej-check-label {
+      color: var(--clr-text-secondary);
+      text-decoration: line-through; text-decoration-color: rgba(62,197,255,.5);
+    }
+
+    /* ── Ejercicio: Toasts ── */
+    .ej-toast {
+      padding: 1px;
+      background: linear-gradient(160deg, rgba(62,197,255,.9), rgba(123,47,247,.7));
+      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+      animation: ejToastIn .45s cubic-bezier(.2,1.2,.3,1), ejToastOut .4s ease-in forwards;
+      animation-delay: 0s, 3.4s;
+      filter: drop-shadow(0 0 14px rgba(62,197,255,.35));
+    }
+    .ej-toast-in {
+      background: linear-gradient(180deg, rgba(14,21,46,.98), rgba(9,13,28,.98));
+      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+      padding: 12px 16px; text-align: center;
+    }
+    .ej-toast-head {
+      font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 10px;
+      letter-spacing: .4em; color: #3ec5ff; text-transform: uppercase;
+      text-shadow: 0 0 8px rgba(62,197,255,.9);
+    }
+    .ej-toast-body { font-size: 14px; color: #fff; margin-top: 4px; line-height: 1.45; }
+    @keyframes ejToastIn { from { opacity:0; transform:translateY(-24px) scale(.94) } to { opacity:1; transform:none } }
+    @keyframes ejToastOut { to { opacity:0; transform:translateY(-16px) scale(.96) } }
+
+    /* ── Ejercicio: Level Up ── */
+    #ej-levelup.show { display: flex; animation: ejLuFlash .5s ease-out; }
+    @keyframes ejLuFlash { 0%{background:#fff} 30%{background:rgba(200,180,255,.9)} 100%{background:radial-gradient(ellipse at center,rgba(123,47,247,.35),rgba(5,7,15,.96) 70%)} }
+
+    /* ── Ejercicio: Rest overlay ── */
+    #ej-rest-overlay.show { display: block; animation: ejRestIn .4s cubic-bezier(.2,1.2,.3,1); }
+    @keyframes ejRestIn { from{opacity:0;transform:translateX(-50%) translateY(24px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
   </style>
 </head>
 <body>
@@ -152,16 +239,60 @@
       <h2>Ajustes</h2>
       <div id="ajustes-content"></div>
     </div>
+
+    <!-- SCREEN: Ejercicio -->
+    <div id="screen-ejercicio" class="screen">
+      <div id="ejercicio-content"></div>
+    </div>
   </div>
 
   <!-- Navigation -->
   <div id="nav">
     <button data-screen="dashboard">Dashboard</button>
+    <button data-screen="ejercicio">Ejercicio</button>
     <button data-screen="batch">Batch</button>
     <button data-screen="mercado">Mercado</button>
     <button data-screen="progreso">Progreso</button>
     <button data-screen="ajustes">Ajustes</button>
   </div>
+
+  <!-- ── Ejercicio: Timer de descanso ── -->
+  <div id="ej-rest-overlay" style="position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:800;width:min(92vw,340px);display:none">
+    <div class="sys-panel-wrap">
+      <div class="panel" style="display:flex;align-items:center;gap:16px">
+        <div style="position:relative;width:96px;height:96px;flex:none">
+          <svg width="96" height="96" viewBox="0 0 96 96" style="transform:rotate(-90deg)">
+            <defs>
+              <linearGradient id="ejRestGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#3ec5ff"/><stop offset="100%" stop-color="#7b2ff7"/>
+              </linearGradient>
+            </defs>
+            <circle cx="48" cy="48" r="42" fill="none" stroke="#1a2547" stroke-width="6"/>
+            <circle id="ej-rest-prog" cx="48" cy="48" r="42" fill="none" stroke="url(#ejRestGrad)" stroke-width="6" stroke-linecap="round" style="filter:drop-shadow(0 0 5px rgba(62,197,255,.9))"/>
+          </svg>
+          <div id="ej-rest-time" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:800;font-size:19px;color:#fff;text-shadow:0 0 10px rgba(62,197,255,.8)">0:00</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:.3em;color:#3ec5ff;text-transform:uppercase;text-shadow:0 0 8px rgba(62,197,255,.8)">Descanso</div>
+          <div id="ej-rest-sub" style="font-size:12px;color:var(--clr-text-secondary);margin:5px 0 10px;line-height:1.4">Recupere energía antes de la siguiente serie.</div>
+          <button id="ej-rest-skip" class="btn-ghost btn-small">Saltar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Ejercicio: Level Up ── -->
+  <div id="ej-levelup" style="position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(123,47,247,.35),rgba(5,7,15,.96) 70%);cursor:pointer;overflow:hidden">
+    <div style="text-align:center;position:relative;z-index:2">
+      <div style="font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(44px,13vw,84px);letter-spacing:.08em;color:#fff;text-shadow:0 0 20px #3ec5ff,0 0 50px #7b2ff7,0 0 90px #7b2ff7">LEVEL UP</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:.35em;color:#3ec5ff;margin-top:14px;text-transform:uppercase;text-shadow:0 0 12px rgba(62,197,255,.9)">Ha subido de nivel</div>
+      <div id="ej-lu-nivel" style="font-family:'Orbitron',sans-serif;font-weight:800;font-size:26px;color:#fff;margin-top:8px;text-shadow:0 0 16px rgba(123,47,247,1)">NIVEL 2</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-weight:600;font-size:11px;letter-spacing:.3em;color:var(--clr-text-secondary);margin-top:26px;text-transform:uppercase">Toque para continuar</div>
+    </div>
+  </div>
+
+  <!-- ── Ejercicio: Toasts ── -->
+  <div id="ej-toasts" style="position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:900;display:flex;flex-direction:column;gap:10px;width:min(92vw,420px);pointer-events:none"></div>
 
   <script type="module" src="./js/app.js"></script>
 </body>

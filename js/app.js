@@ -10,6 +10,7 @@ import { MERCADO } from './data/mercado.js';
 import { BATCH_COOKING, getBatchCooking, getBatchCookingList } from './data/batch.js';
 import { getFaseActiva } from './data/fases.js';
 import { macrosDeReceta, totalesDelDia, progresoVsMeta, autoVerificar } from './core/macros.js';
+import { renderEjercicio } from './screens/ejercicio.js';
 
 // Verificación de datos
 console.log('🔍 Verificando aritmética de macros...');
@@ -94,6 +95,17 @@ function setupEventListeners() {
     });
   });
 
+  // Ejercicio: Skip descanso y Level Up
+  const ejSkip = document.getElementById('ej-rest-skip');
+  if (ejSkip) ejSkip.addEventListener('click', () => {
+    store.data.ejercicio_rest_timer = null;
+    store.save();
+    document.getElementById('ej-rest-overlay').classList.remove('show');
+  });
+
+  const ejLevelUp = document.getElementById('ej-levelup');
+  if (ejLevelUp) ejLevelUp.addEventListener('click', () => ejLevelUp.classList.remove('show'));
+
   // Paso anterior/siguiente en modo guiado
   document.getElementById('btn-paso-anterior').addEventListener('click', () => {
     if (pasoActual > 0) {
@@ -119,6 +131,15 @@ function irAPanel(screen) {
   // Ocultar todos
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
 
+  // Resaltar botón activo en nav
+  document.querySelectorAll('#nav button').forEach(btn => {
+    btn.style.color = btn.dataset.screen === screen ? '#fff' : '';
+    btn.style.borderColor = btn.dataset.screen === screen ? '#3ec5ff' : '';
+    btn.style.background = btn.dataset.screen === screen
+      ? 'linear-gradient(180deg,rgba(123,47,247,.35),rgba(62,197,255,.15))'
+      : '';
+  });
+
   // Mostrar el solicitado
   const screenEl = document.getElementById(`screen-${screen}`);
   if (screenEl) {
@@ -127,6 +148,7 @@ function irAPanel(screen) {
 
     // Renderizar contenido dinamico
     if (screen === 'dashboard') renderizarDashboard();
+    if (screen === 'ejercicio') renderEjercicio();
     if (screen === 'batch') renderizarBatch();
     if (screen === 'mercado') renderizarMercado();
     if (screen === 'progreso') renderizarProgreso();
