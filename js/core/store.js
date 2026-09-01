@@ -32,7 +32,7 @@ export class Store {
     // Estado inicial
     return {
       version: VERSION,
-      nivel: 1,
+      nivel: 'E',  // Rango inicial (Sistema Solo Leveling)
       xp: 0,
       racha: 0,
       ultima_fecha_completada: null,
@@ -124,26 +124,56 @@ export class Store {
     return nivel;
   }
 
-  obtenerXPDelNivel(nivel) {
-    let total = 0;
-    for (let n = 1; n < nivel; n++) {
-      const xpReq = n === 1 ? 100 : 100 + (n - 2) * 50;
-      total += xpReq;
+  // Sistema de RANGOS (Solo Leveling): E → D → C → B → A → S
+  // Progresión DIFICIL: refleja resultados reales en vida (125 XP/día = 1-1.5 años para S)
+  calcularRango(xpTotal) {
+    const rangos = [
+      { rango: 'E', xpMin: 0,      xpMax: 2000 },    // E: 0-2,000 (2k para avanzar)
+      { rango: 'D', xpMin: 2000,   xpMax: 5000 },    // D: 2k-5k (3k para avanzar)
+      { rango: 'C', xpMin: 5000,   xpMax: 12000 },   // C: 5k-12k (7k para avanzar)
+      { rango: 'B', xpMin: 12000,  xpMax: 25000 },   // B: 12k-25k (13k para avanzar)
+      { rango: 'A', xpMin: 25000,  xpMax: 60000 },   // A: 25k-60k (35k para avanzar)
+      { rango: 'S', xpMin: 60000,  xpMax: Infinity } // S: 60k+ (~1.3 años @ 125 XP/día)
+    ];
+
+    for (const r of rangos) {
+      if (xpTotal >= r.xpMin && xpTotal < r.xpMax) {
+        return {
+          rango: r.rango,
+          xpEnRango: xpTotal - r.xpMin,
+          xpParaSiguiente: r.xpMax - r.xpMin,
+          xpMin: r.xpMin,
+          xpMax: r.xpMax
+        };
+      }
     }
-    return total;
+    // Si alcanza S: sin límite
+    return {
+      rango: 'S',
+      xpEnRango: xpTotal - 60000,
+      xpParaSiguiente: 0,
+      xpMin: 60000,
+      xpMax: Infinity
+    };
   }
 
   obtenerProgresoNivel(xp) {
-    const nivel = this.data.nivel;
-    const xpNivelActual = this.obtenerXPDelNivel(nivel);
-    const xpSiguiente = this.obtenerXPDelNivel(nivel + 1);
+    const rangoData = this.calcularRango(xp);
     return {
-      nivel,
+      nivel: rangoData.rango,  // Compatibilidad: "nivel" ahora es el rango
+      rango: rangoData.rango,
       xp,
-      xpNivelActual,
-      xpSiguiente,
-      progreso: xp - xpNivelActual
+      xpNivelActual: rangoData.xpMin,
+      xpSiguiente: rangoData.xpMax,
+      xpEnRango: rangoData.xpEnRango,
+      xpParaSiguiente: rangoData.xpParaSiguiente,
+      progreso: rangoData.xpEnRango
     };
+  }
+
+  calcularNivel(xp) {
+    // Para compatibilidad con código existente que espera calcularNivel()
+    return this.calcularRango(xp).rango;
   }
 
   calcularRacha(fecha = new Date()) {
