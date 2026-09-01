@@ -160,6 +160,9 @@ function irAPanel(screen) {
 // ============ DASHBOARD ============
 
 function renderizarDashboard() {
+  // Sincronizar fecha en caso de que haya cambiado de día
+  store.sincronizarDia();
+
   const hoy = new Date();
   const diaDelMes = getDiaDelMes();
   const rutina = getRutinaDia(diaDelMes);
@@ -168,7 +171,7 @@ function renderizarDashboard() {
 
   const progXp = store.obtenerProgresoNivel(store.data.xp);
 
-  document.getElementById('hunter-nivel').textContent = progXp.nivel;
+  document.getElementById('hunter-nivel').textContent = `RANGO ${progXp.rango}`;
   document.getElementById('hunter-racha').textContent = store.calcularRacha(hoy);
 
   const xpDelNivel = progXp.xp - progXp.xpNivelActual;
@@ -525,19 +528,35 @@ function renderizarProgreso() {
   const ejercStats = store.data.ejercicio_stats || { fuerza: 0, resistencia: 0, agilidad: 0, vitalidad: 0 };
   const racha = store.calcularRacha(new Date());
 
-  const xpDelNivel = progXp.xp - progXp.xpNivelActual;
-  const xpParaSiguiente = progXp.xpSiguiente - progXp.xpNivelActual;
-  const pctXp = Math.round((xpDelNivel / xpParaSiguiente) * 100);
+  const pctXp = progXp.xpParaSiguiente > 0 ? Math.round((progXp.xpEnRango / progXp.xpParaSiguiente) * 100) : 0;
+
+  // Colores por rango
+  const colorRango = {
+    'E': 'rgba(65,240,166,.5)',  // Verde
+    'D': 'rgba(62,197,255,.5)',  // Azul
+    'C': 'rgba(123,47,247,.5)',  // Púrpura
+    'B': 'rgba(255,107,129,.5)', // Rojo/Rosa
+    'A': 'rgba(255,207,92,.5)',  // Oro
+    'S': 'rgba(255,0,127,.7)'    // Magenta
+  };
+  const colorRangoGlow = {
+    'E': 'rgba(65,240,166,.9)',
+    'D': 'rgba(62,197,255,.9)',
+    'C': 'rgba(123,47,247,.9)',
+    'B': 'rgba(255,107,129,.9)',
+    'A': 'rgba(255,207,92,.9)',
+    'S': 'rgba(255,0,127,1)'
+  };
 
   container.innerHTML = `
-    <!-- HEADER: CAZADOR + NIVEL -->
+    <!-- HEADER: CAZADOR + RANGO -->
     <div class="sys-panel-wrap" style="margin-bottom:var(--space-lg);">
-      <div class="panel" style="text-align:center;padding:var(--space-lg);background:linear-gradient(180deg,rgba(123,47,247,.15),rgba(62,197,255,.08));">
+      <div class="panel" style="text-align:center;padding:var(--space-lg);background:linear-gradient(180deg,${colorRango[progXp.rango]},rgba(62,197,255,.02));">
         <div style="font-family:var(--font-system);font-size:11px;letter-spacing:.3em;color:var(--clr-verde);text-transform:uppercase;text-shadow:0 0 8px rgba(65,240,166,.5);margin-bottom:var(--space-md);">
           ✦ HUNTER STATUS ✦
         </div>
-        <div style="font-family:var(--font-display);font-size:72px;font-weight:900;letter-spacing:2px;color:var(--clr-cian);text-shadow:0 0 20px rgba(62,197,255,.9),0 0 40px rgba(62,197,255,.5);margin:0;">
-          Lv.${progXp.nivel}
+        <div style="font-family:var(--font-display);font-size:80px;font-weight:900;letter-spacing:4px;color:${colorRangoGlow[progXp.rango]};text-shadow:0 0 20px ${colorRangoGlow[progXp.rango]},0 0 40px ${colorRangoGlow[progXp.rango]};margin:0;">
+          ${progXp.rango}
         </div>
         <div style="font-family:var(--font-system);font-size:13px;letter-spacing:.15em;color:var(--clr-text-secondary);margin-top:var(--space-sm);text-transform:uppercase;">
           CAZADOR EN ASCENSO
@@ -546,16 +565,16 @@ function renderizarProgreso() {
     </div>
 
     <!-- XP BAR -->
-    <div class="panel" style="padding:var(--space-md);border-left:4px solid var(--clr-violet);">
+    <div class="panel" style="padding:var(--space-md);border-left:4px solid ${colorRangoGlow[progXp.rango]};">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-sm);">
-        <strong style="color:var(--clr-violet);text-shadow:0 0 8px rgba(123,47,247,.5);">EXPERIENCIA</strong>
-        <span style="font-size:12px;color:var(--clr-text-secondary);">${xpDelNivel} / ${xpParaSiguiente}</span>
+        <strong style="color:${colorRangoGlow[progXp.rango]};text-shadow:0 0 8px ${colorRangoGlow[progXp.rango]};">EXPERIENCIA</strong>
+        <span style="font-size:12px;color:var(--clr-text-secondary);">${progXp.xpEnRango} / ${progXp.xpParaSiguiente} XP</span>
       </div>
       <div class="progress-bar">
-        <div class="progress-bar__fill" style="width:${pctXp}%;"></div>
+        <div class="progress-bar__fill" style="width:${pctXp}%;background:linear-gradient(90deg,${colorRangoGlow[progXp.rango]},${colorRango[progXp.rango]});"></div>
       </div>
       <div style="font-size:11px;color:var(--clr-text-secondary);margin-top:4px;text-align:right;">
-        ${pctXp}% para siguiente nivel
+        ${pctXp}% para siguiente rango${progXp.rango === 'S' ? ' (MÁXIMO)' : ''}
       </div>
     </div>
 

@@ -176,6 +176,24 @@ export class Store {
     return this.calcularRango(xp).rango;
   }
 
+  // Sincroniza el estado cuando cambia de día
+  sincronizarDia() {
+    const hoy = new Date().toISOString().split('T')[0];
+    const ultimaFecha = this.data.ultima_fecha_completada;
+
+    // Si es un día nuevo, garantizar que las quests_completadas del día estén inicializadas
+    if (ultimaFecha !== hoy && !this.data.quests_completadas[hoy]) {
+      this.data.quests_completadas[hoy] = {};
+    }
+
+    // Si hay ejercicio_hoy de un día anterior, resetear (ejercicio es por día)
+    if (this.data.ejercicio_hoy && this.data.ejercicio_hoy.date !== hoy) {
+      this.data.ejercicio_hoy = null;
+    }
+
+    this.save();
+  }
+
   calcularRacha(fecha = new Date()) {
     // Racha: dias consecutivos donde se completaron todas las quests obligatorias
     let racha = 0;
