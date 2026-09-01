@@ -2,7 +2,9 @@
  * Service Worker — Offline + Push
  */
 
-const CACHE_VERSION = 'recetario-v1';
+// Cambiar número cada vez que hay actualizaciones críticas
+// Safari tendrá que descargar todo nuevamente
+const CACHE_VERSION = 'recetario-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -53,7 +55,7 @@ self.addEventListener('activate', (ev) => {
   self.clients.claim();
 });
 
-// Fetch — Cache first, fallback to network
+// Fetch — Strategy por tipo
 self.addEventListener('fetch', (ev) => {
   const url = new URL(ev.request.url);
 
@@ -62,6 +64,29 @@ self.addEventListener('fetch', (ev) => {
     return;
   }
 
+  // STRATEGY: HTML = Network first (siempre descarga versión nueva)
+  if (url.pathname.endsWith('.html') || url.pathname === '/Salud/') {
+    ev.respondWith(
+      fetch(ev.request)
+        .then((response) => {
+          // Cachear si tiene éxito
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_VERSION).then((cache) => {
+              cache.put(ev.request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Offline: devolver versión cacheada
+          return caches.match(ev.request);
+        })
+    );
+    return;
+  }
+
+  // STRATEGY: CSS/JS/Assets = Cache first (usa cache, fallback a network)
   ev.respondWith(
     caches.match(ev.request).then((response) => {
       if (response) {
@@ -69,7 +94,6 @@ self.addEventListener('fetch', (ev) => {
       }
 
       return fetch(ev.request).then((response) => {
-        // Cache en segundo plano si tiene éxito
         if (response && response.status === 200 && response.type === 'basic') {
           const responseToCache = response.clone();
           caches.open(CACHE_VERSION).then((cache) => {
@@ -78,7 +102,6 @@ self.addEventListener('fetch', (ev) => {
         }
         return response;
       }).catch(() => {
-        // Offline: devolver archivo cacheado o error genérico
         return caches.match('./index.html');
       });
     })
