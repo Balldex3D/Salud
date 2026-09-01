@@ -187,7 +187,7 @@ export const RECETAS = {
       { nombre: 'Pasta miso', crudo: '20 g', kcal: 35, p: 2, g: 1, c: 5 },
       { nombre: 'Huevos', crudo: '2 ud (100 g)', kcal: 140, p: 12, g: 10, c: 1 },
       { nombre: 'Espinaca', crudo: '40 g', cocido: '30 g', kcal: 10, p: 1, g: 0, c: 1 },
-      { nombre: 'Tofu firme', crudo: '80 g', kcal: 60, p: 7, g: 3, c: 1 },
+      { nombre: 'Tofu Mori-Nu Silken (firme)', crudo: '80 g', kcal: 78, p: 7.6, g: 4.5, c: 1 },
       { nombre: 'Aceite sesamo', crudo: '7 ml', kcal: 63, p: 0, g: 7, c: 0 },
       { nombre: 'Nori', crudo: '2 g', kcal: 5, p: 0.5, g: 0, c: 0.5 },
       { nombre: 'Cebolla larga', crudo: '15 g', kcal: 5, p: 0, g: 0, c: 1 }
@@ -195,10 +195,11 @@ export const RECETAS = {
     pasos: [
       'Hierve 500 ml de agua a fuego alto hasta ebullicion completa.',
       { texto: 'Agrega 100 g de fideos udon secos. Cocina 3 minutos desde que vuelve a hervir.', timer_segundos: 180 },
-      { texto: 'Agrega 80 g de tofu en cubos y 40 g de espinaca. Cocina 1 minuto mas.', timer_segundos: 60 },
+      { texto: 'Agrega 40 g de espinaca. Cocina 1 minuto mas. El tofu Mori-Nu es delicado — lo agregaras sin cocinar en el paso siguiente.', timer_segundos: 60 },
       'RETIRA LA OLLA DEL FUEGO POR COMPLETO. El miso nunca debe hervir.',
       'Disuelve 20 g de pasta miso en un cucharon con un poco del caldo caliente, luego vierte de vuelta a la olla.',
       'Huevo: poche directo en la sopa (tapar 3 min sin destapar) o revuelto aparte y agregado despues.',
+      'Agregา 80 g de tofu Mori-Nu del recipiente de vidrio — CUIDADO, es delicado. Deja reposar 30 seg sin mover.',
       'Sirve en un bowl hondo. Termina con 2 g de nori en tiras, 15 g de cebolla larga, 7 ml de aceite de sesamo.'
     ]
   },
@@ -210,12 +211,12 @@ export const RECETAS = {
     rango: 'B',
     cuando: 'Cena — Martes y Viernes',
     tiempo_min: 15,
-    kcal: 717, proteina_g: 33, grasa_g: 26, carbo_g: 85,
+    kcal: 755, proteina_g: 36, grasa_g: 26.5, carbo_g: 85,
     ajuste_fase1: null,
     regla_especial: null,
     ingredientes: [
       { nombre: 'Arroz blanco', crudo: '100 g', cocido: '250 g', kcal: 350, p: 7, g: 0.5, c: 78 },
-      { nombre: 'Tofu (laminas)', crudo: '200 g', kcal: 150, p: 16, g: 8, c: 3 },
+      { nombre: 'Tofu Mori-Nu Silken (láminas)', crudo: '200 g', kcal: 194, p: 19, g: 9, c: 2 },
       { nombre: 'Huevo', crudo: '1 ud (50 g)', kcal: 70, p: 6, g: 5, c: 0.5 },
       { nombre: 'Espinaca', crudo: '60 g', cocido: '45 g', kcal: 14, p: 2, g: 0, c: 1 },
       { nombre: 'Ghee (coccion)', crudo: '5 g', kcal: 45, p: 0, g: 5, c: 0 },
@@ -225,12 +226,10 @@ export const RECETAS = {
       { nombre: 'Cebolla larga', crudo: '10 g', kcal: 3, p: 0, g: 0, c: 0.5 }
     ],
     pasos: [
-      'Corta 200 g de tofu firme en laminas de 1 cm. Secalas con papel de cocina, 30 seg por lado.',
-      { texto: 'Opcion Air Fryer (recomendada): precalienta a 200 C 3 min. Coloca las laminas, pincela con la mitad del ghee (2.5 g). Cocina 12 minutos, volteando a los 6 min. Listas cuando los bordes estan dorados y firmes.', timer_segundos: 720 },
-      { texto: 'Opcion Sarten (alternativa): fuego medio-alto, 5 g de ghee, 3 minutos por lado sin mover.', timer_segundos: 180 },
-      { texto: 'Saltea 60 g de espinaca en sarten seca o con el ghee restante, fuego medio, 1 minuto, hasta marchita.', timer_segundos: 60 },
+      'Tofu Mori-Nu Silken: vierte 200 g del recipiente en un bowl. NO lo secas ni cocinas — es muy delicado. Resevalo para el final frio o tibio.',
+      { texto: '(Saltea 60 g de espinaca se hace igual, fuego medio en sarten, 1 minuto hasta marchita.)', timer_segundos: 60 },
       { texto: 'Frie 1 huevo a fuego medio-bajo, 2-3 minutos sin voltear (yema liquida).', timer_segundos: 150 },
-      'Arma el bowl: 250 g de arroz -> laminas de tofu -> espinaca -> huevo encima.',
+      'Arma el bowl: 250 g de arroz -> tofu Mori-Nu (cuidado, delicado) -> espinaca -> huevo encima.',
       'Termina con: 15 ml de salsa de soya, 5 ml de aceite de sesamo, 5 g de sesamo, 10 g de cebolla larga.'
     ]
   },
@@ -242,13 +241,13 @@ export const RECETAS = {
     rango: 'C',
     cuando: 'Cena — Miercoles, Sabado y Domingo',
     tiempo_min: 8,
-    kcal: 630, proteina_g: 27, grasa_g: 18.5, carbo_g: 88,
+    kcal: 668, proteina_g: 28.9, grasa_g: 19.5, carbo_g: 88,
     ajuste_fase1: null,
     regla_especial: 'El miso se disuelve SIEMPRE fuera del fuego.',
     ingredientes: [
       { nombre: 'Arroz blanco', crudo: '100 g', cocido: '250 g', kcal: 350, p: 7, g: 0.5, c: 78 },
       { nombre: 'Pasta miso', crudo: '20 g', kcal: 35, p: 2, g: 1, c: 5 },
-      { nombre: 'Tofu (cubos)', crudo: '120 g', kcal: 90, p: 10, g: 5, c: 2 },
+      { nombre: 'Tofu Mori-Nu Silken (cubos)', crudo: '120 g', kcal: 116, p: 11.4, g: 5.5, c: 1 },
       { nombre: 'Huevo', crudo: '1 ud (50 g)', kcal: 70, p: 6, g: 5, c: 0.5 },
       { nombre: 'Espinaca', crudo: '50 g', cocido: '40 g', kcal: 12, p: 1.5, g: 0, c: 1 },
       { nombre: 'Nori', crudo: '2 g', kcal: 5, p: 0.5, g: 0, c: 0.5 },
@@ -257,8 +256,9 @@ export const RECETAS = {
     ],
     pasos: [
       'Hierve 400 ml de agua a fuego alto hasta ebullicion completa.',
-      { texto: 'Agrega 120 g de tofu en cubos y 50 g de espinaca. Cocina 2 minutos.', timer_segundos: 120 },
+      { texto: 'Agrega 50 g de espinaca. Cocina 1 minuto.', timer_segundos: 60 },
       'RETIRA LA OLLA DEL FUEGO POR COMPLETO. Disuelve 20 g de pasta miso con un poco del caldo caliente y vierte de vuelta.',
+      'Agregا 120 g de tofu Mori-Nu del recipiente (CUIDADO, es delicado). Deja reposar 30 seg sin mover.',
       'Huevo: poche directo en la sopa (tapar 3 min) o revuelto aparte.',
       'Sirve la sopa en un bowl. El arroz (250 g) va en un bowl aparte al lado, no se mezcla dentro de la sopa.',
       'Termina con: 2 g de nori en tiras, 15 g de cebolla larga, 7 ml de aceite de sesamo.'
