@@ -522,31 +522,123 @@ function renderizarProgreso() {
   const container = document.getElementById('progreso-content');
   const progXp = store.obtenerProgresoNivel(store.data.xp);
   const fase = getFaseActiva();
+  const ejercStats = store.data.ejercicio_stats || { fuerza: 0, resistencia: 0, agilidad: 0, vitalidad: 0 };
+  const racha = store.calcularRacha(new Date());
+
+  const xpDelNivel = progXp.xp - progXp.xpNivelActual;
+  const xpParaSiguiente = progXp.xpSiguiente - progXp.xpNivelActual;
+  const pctXp = Math.round((xpDelNivel / xpParaSiguiente) * 100);
 
   container.innerHTML = `
-    <div class="panel">
-      <div style="text-align:center;margin-bottom:var(--space-lg);">
-        <div style="font-size:64px;font-weight:bold;color:var(--clr-cian);">Lv.${progXp.nivel}</div>
-        <div style="color:var(--clr-text-secondary);margin-top:var(--space-md);">${store.data.xp} XP total</div>
+    <!-- HEADER: CAZADOR + NIVEL -->
+    <div class="sys-panel-wrap" style="margin-bottom:var(--space-lg);">
+      <div class="panel" style="text-align:center;padding:var(--space-lg);background:linear-gradient(180deg,rgba(123,47,247,.15),rgba(62,197,255,.08));">
+        <div style="font-family:var(--font-system);font-size:11px;letter-spacing:.3em;color:var(--clr-verde);text-transform:uppercase;text-shadow:0 0 8px rgba(65,240,166,.5);margin-bottom:var(--space-md);">
+          ✦ HUNTER STATUS ✦
+        </div>
+        <div style="font-family:var(--font-display);font-size:72px;font-weight:900;letter-spacing:2px;color:var(--clr-cian);text-shadow:0 0 20px rgba(62,197,255,.9),0 0 40px rgba(62,197,255,.5);margin:0;">
+          Lv.${progXp.nivel}
+        </div>
+        <div style="font-family:var(--font-system);font-size:13px;letter-spacing:.15em;color:var(--clr-text-secondary);margin-top:var(--space-sm);text-transform:uppercase;">
+          CAZADOR EN ASCENSO
+        </div>
       </div>
     </div>
 
-    <div class="panel">
-      <strong>Fase activa:</strong><br>
-      ${fase.nombre} (Semanas ${fase.semanas})<br>
-      Meta: ${fase.kcal_meta} kcal/día
-      ${fase.macros_meta ? `<br>P: ${fase.macros_meta.proteina_g}g | G: ${fase.macros_meta.grasa_g}g | C: ${fase.macros_meta.carbo_g}g` : '<br><em>Pendiente de definir</em>'}
+    <!-- XP BAR -->
+    <div class="panel" style="padding:var(--space-md);border-left:4px solid var(--clr-violet);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-sm);">
+        <strong style="color:var(--clr-violet);text-shadow:0 0 8px rgba(123,47,247,.5);">EXPERIENCIA</strong>
+        <span style="font-size:12px;color:var(--clr-text-secondary);">${xpDelNivel} / ${xpParaSiguiente}</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-bar__fill" style="width:${pctXp}%;"></div>
+      </div>
+      <div style="font-size:11px;color:var(--clr-text-secondary);margin-top:4px;text-align:right;">
+        ${pctXp}% para siguiente nivel
+      </div>
     </div>
 
-    <div class="panel" style="margin-top:var(--space-lg);">
-      <strong>Historial reciente:</strong>
-      <div style="font-size:12px;margin-top:var(--space-md);">
-        ${store.data.historial.slice(-5).reverse().map(h => `
-          <div style="padding:4px 0;border-bottom:1px solid var(--clr-border);">
-            <strong>${h.fecha}</strong> — ${h.tipo} (${h.kcal} kcal)
+    <!-- STATS: RACHA + FASE -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);margin-top:var(--space-lg);">
+      <div class="panel" style="text-align:center;padding:var(--space-md);border-left:4px solid var(--clr-ambar);">
+        <div style="font-size:12px;color:var(--clr-ambar);text-transform:uppercase;letter-spacing:.1em;text-shadow:0 0 8px rgba(255,207,92,.5);">Racha</div>
+        <div style="font-size:32px;font-weight:bold;color:var(--clr-ambar);margin-top:4px;">${racha}</div>
+        <div style="font-size:10px;color:var(--clr-text-secondary);margin-top:4px;">días seguidos</div>
+      </div>
+
+      <div class="panel" style="text-align:center;padding:var(--space-md);border-left:4px solid var(--clr-verde);">
+        <div style="font-size:12px;color:var(--clr-verde);text-transform:uppercase;letter-spacing:.1em;text-shadow:0 0 8px rgba(65,240,166,.5);">Fase</div>
+        <div style="font-size:14px;font-weight:bold;color:var(--clr-text-primary);margin-top:4px;">${fase.nombre}</div>
+        <div style="font-size:10px;color:var(--clr-text-secondary);margin-top:4px;">S${fase.semanas}</div>
+      </div>
+    </div>
+
+    <!-- EXERCISE STATS (si hay) -->
+    ${ejercStats.fuerza + ejercStats.resistencia + ejercStats.agilidad + ejercStats.vitalidad > 0 ? `
+      <div class="panel" style="margin-top:var(--space-lg);padding:var(--space-md);border-left:4px solid var(--clr-blue);background:linear-gradient(180deg,rgba(62,197,255,.08),rgba(62,197,255,.02));">
+        <div style="font-family:var(--font-system);font-size:11px;letter-spacing:.2em;color:var(--clr-blue);text-transform:uppercase;text-shadow:0 0 8px rgba(62,197,255,.5);margin-bottom:var(--space-md);">
+          ⚔ ATRIBUTOS
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-sm);">
+          <div style="padding:var(--space-sm);background:var(--clr-darker);border-radius:2px;text-align:center;">
+            <div style="font-size:11px;color:var(--clr-text-secondary);text-transform:uppercase;">Fuerza</div>
+            <div style="font-size:18px;font-weight:bold;color:var(--clr-rojo);margin-top:2px;">${ejercStats.fuerza}</div>
           </div>
-        `).join('') || '<em>Sin historial</em>'}
+          <div style="padding:var(--space-sm);background:var(--clr-darker);border-radius:2px;text-align:center;">
+            <div style="font-size:11px;color:var(--clr-text-secondary);text-transform:uppercase;">Resistencia</div>
+            <div style="font-size:18px;font-weight:bold;color:var(--clr-verde);margin-top:2px;">${ejercStats.resistencia}</div>
+          </div>
+          <div style="padding:var(--space-sm);background:var(--clr-darker);border-radius:2px;text-align:center;">
+            <div style="font-size:11px;color:var(--clr-text-secondary);text-transform:uppercase;">Agilidad</div>
+            <div style="font-size:18px;font-weight:bold;color:var(--clr-violet);margin-top:2px;">${ejercStats.agilidad}</div>
+          </div>
+          <div style="padding:var(--space-sm);background:var(--clr-darker);border-radius:2px;text-align:center;">
+            <div style="font-size:11px;color:var(--clr-text-secondary);text-transform:uppercase;">Vitalidad</div>
+            <div style="font-size:18px;font-weight:bold;color:var(--clr-ambar);margin-top:2px;">${ejercStats.vitalidad}</div>
+          </div>
+        </div>
       </div>
+    ` : ''}
+
+    <!-- META DE NUTRICIÓN -->
+    <div class="panel" style="margin-top:var(--space-lg);padding:var(--space-md);border-left:4px solid var(--clr-cian);">
+      <div style="font-family:var(--font-system);font-size:11px;letter-spacing:.2em;color:var(--clr-cian);text-transform:uppercase;text-shadow:0 0 8px rgba(62,197,255,.5);margin-bottom:var(--space-md);">
+        🎯 OBJETIVOS
+      </div>
+      <div style="font-size:13px;line-height:1.8;color:var(--clr-text-primary);">
+        <strong>${fase.kcal_meta}</strong> kcal/día<br>
+        ${fase.macros_meta ? `
+          <span style="color:var(--clr-text-secondary);font-size:12px;">
+            P: <strong style="color:var(--clr-text-primary);">${fase.macros_meta.proteina_g}g</strong> |
+            G: <strong style="color:var(--clr-text-primary);">${fase.macros_meta.grasa_g}g</strong> |
+            C: <strong style="color:var(--clr-text-primary);">${fase.macros_meta.carbo_g}g</strong>
+          </span>
+        ` : '<em style="color:var(--clr-text-secondary);">Pendiente de definir</em>'}
+      </div>
+    </div>
+
+    <!-- HISTORIAL -->
+    ${store.data.historial.length > 0 ? `
+      <div class="panel" style="margin-top:var(--space-lg);padding:var(--space-md);border-left:4px solid var(--clr-text-secondary);">
+        <div style="font-family:var(--font-system);font-size:11px;letter-spacing:.2em;color:var(--clr-text-secondary);text-transform:uppercase;text-shadow:0 0 8px rgba(124,139,176,.5);margin-bottom:var(--space-md);">
+          📜 HISTORIAL RECIENTE
+        </div>
+        <div style="font-size:12px;line-height:1.8;">
+          ${store.data.historial.slice(-8).reverse().map(h => `
+            <div style="padding:6px 0;border-bottom:1px solid var(--clr-border);display:flex;justify-content:space-between;align-items:center;">
+              <span><strong>${h.fecha}</strong> · ${h.tipo}</span>
+              <span style="color:var(--clr-ambar);">+${h.kcal} kcal</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- XP TOTAL -->
+    <div style="margin-top:var(--space-lg);text-align:center;padding:var(--space-md);background:rgba(123,47,247,.1);border:1px solid rgba(123,47,247,.3);border-radius:2px;">
+      <div style="font-size:11px;color:var(--clr-text-secondary);text-transform:uppercase;letter-spacing:.1em;">Total acumulado</div>
+      <div style="font-size:24px;font-weight:bold;color:var(--clr-violet);text-shadow:0 0 12px rgba(123,47,247,.6);margin-top:4px;">${store.data.xp} XP</div>
     </div>
   `;
 }
