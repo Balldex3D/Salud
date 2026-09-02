@@ -1,10 +1,10 @@
 /**
  * Service Worker — Offline + Push
+ * Strategy: HTML/JS siempre descarga nuevo, fallback a cache si offline
  */
 
-// Cambiar número cada vez que hay actualizaciones críticas
-// Safari tendrá que descargar todo nuevamente
-const CACHE_VERSION = 'recetario-v2';
+// Cambiar versión cada vez que hay cambios
+const CACHE_VERSION = 'recetario-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -23,13 +23,12 @@ const ASSETS_TO_CACHE = [
 
 // Install — precache
 self.addEventListener('install', (ev) => {
-  console.log('[SW] Installing...');
+  console.log('[SW] Installing v3...');
   ev.waitUntil(
     caches.open(CACHE_VERSION).then((cache) => {
       console.log('[SW] Caching assets...');
       return cache.addAll(ASSETS_TO_CACHE).catch((e) => {
         console.warn('[SW] Some assets failed to cache:', e);
-        // No fallar completamente si algún asset falla
         return Promise.resolve();
       });
     })
@@ -39,7 +38,7 @@ self.addEventListener('install', (ev) => {
 
 // Activate — limpiar caches viejos
 self.addEventListener('activate', (ev) => {
-  console.log('[SW] Activating...');
+  console.log('[SW] Activating v3...');
   ev.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -64,8 +63,8 @@ self.addEventListener('fetch', (ev) => {
     return;
   }
 
-  // STRATEGY: HTML = Network first (siempre descarga versión nueva)
-  if (url.pathname.endsWith('.html') || url.pathname === '/Salud/') {
+  // STRATEGY: HTML + JS = NETWORK FIRST (siempre descarga nuevo, fallback cache)
+  if (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname === '/') {
     ev.respondWith(
       fetch(ev.request)
         .then((response) => {
@@ -80,13 +79,16 @@ self.addEventListener('fetch', (ev) => {
         })
         .catch(() => {
           // Offline: devolver versión cacheada
-          return caches.match(ev.request);
+          console.log('[SW] Offline, using cached:', url.pathname);
+          return caches.match(ev.request).then((cached) => {
+            return cached || caches.match('./index.html');
+          });
         })
     );
     return;
   }
 
-  // STRATEGY: CSS/JS/Assets = Cache first (usa cache, fallback a network)
+  // STRATEGY: CSS/Assets = Cache first (usa cache, fallback a network)
   ev.respondWith(
     caches.match(ev.request).then((response) => {
       if (response) {
@@ -112,7 +114,6 @@ self.addEventListener('fetch', (ev) => {
 self.addEventListener('push', (ev) => {
   console.log('[SW] Push recibido');
 
-  // Sin payload: determinar el mensaje desde la hora local
   const ahora = new Date();
   const horas = ahora.getHours().toString().padStart(2, '0');
   const minutos = ahora.getMinutes().toString().padStart(2, '0');
@@ -144,11 +145,9 @@ self.addEventListener('notificationclick', (ev) => {
   ev.notification.close();
   ev.waitUntil(
     clients.matchAll({ type: 'window' }).then((clientList) => {
-      // Si hay una ventana abierta, enfocarla
       if (clientList.length > 0) {
         return clientList[0].focus();
       }
-      // Si no, abrir la app
       return clients.openWindow('./');
     })
   );

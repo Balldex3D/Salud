@@ -16,7 +16,10 @@
       "PowerShell([xml]$doc = Get-Content \"C:\\\\Users\\\\clgar\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-clgar-OneDrive-Documentos-Claude-Salud\\\\cf50db0d-fff6-4c86-a10b-13c9d7bc7e35\\\\scratchpad\\\\recetario_extracted\\\\word\\\\document.xml\"; $doc.DocumentElement.InnerText | Out-File \"C:\\\\Users\\\\clgar\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-clgar-OneDrive-Documentos-Claude-Salud\\\\cf50db0d-fff6-4c86-a10b-13c9d7bc7e35\\\\scratchpad\\\\recetario_texto.txt\" -Encoding UTF8)",
       "Bash(git commit -m 'Feat: Recetas mejoradas v3 + Overlay visual + Cronómetro independiente *)",
       "PowerShell(cd \"C:\\\\Users\\\\clgar\\\\OneDrive\\\\Documentos\\\\Claude\\\\Salud\"; powershell -ExecutionPolicy Bypass -File server.ps1)",
-      "Bash(git commit -m 'Fix: Migrar a IndexedDB para persistencia de datos en Safari/iPad *)"
+      "Bash(git commit -m 'Fix: Migrar a IndexedDB para persistencia de datos en Safari/iPad *)",
+      "PowerShell(Get-Process powershell -ErrorAction SilentlyContinue | Stop-Process -Force 2>$null; Start-Sleep -Milliseconds 500; cd \"C:\\\\Users\\\\clgar\\\\OneDrive\\\\Documentos\\\\Claude\\\\Salud\"; powershell -ExecutionPolicy Bypass -File server.ps1)",
+      "Bash(node server.js)",
+      "Bash(git commit -m 'Fix: Service Worker strategy + desabilitar SW temporalmente *)"
     ]
   }
 }
