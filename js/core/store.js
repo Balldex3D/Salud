@@ -109,6 +109,8 @@ export class Store {
     if (!data.ejercicio_historial) data.ejercicio_historial = [];
     if (!('ejercicio_hoy' in data)) data.ejercicio_hoy = null;
     if (!('ejercicio_rest_timer' in data)) data.ejercicio_rest_timer = null;
+    if (!data.recordatorios) data.recordatorios = {};
+    if (!data.quests_completadas) data.quests_completadas = {};
     return data;
   }
 
@@ -125,6 +127,7 @@ export class Store {
       quests_completadas: {},
       historial: [],
       mercado_checklist: {},
+      recordatorios: {},
       ajustes: {
         notificaciones_habilitadas: true,
         batch_cooking_hora: '20:00',

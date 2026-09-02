@@ -8,6 +8,7 @@ import { RECETAS, pasosNormalizados } from './data/recetas.js';
 import { HORARIO, RUTINA_SEMANAL, getDiaDelMes, getRutinaDia } from './data/horario.js';
 import { MERCADO } from './data/mercado.js';
 import { BATCH_COOKING, getBatchCooking, getBatchCookingList } from './data/batch.js';
+import { RECORDATORIOS } from './data/reminders.js';
 import { getFaseActiva } from './data/fases.js';
 import { macrosDeReceta, totalesDelDia, progresoVsMeta, autoVerificar } from './core/macros.js';
 import { renderEjercicio } from './screens/ejercicio.js';
@@ -139,7 +140,7 @@ function irAPanel(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
 
   // Resaltar botón activo en nav
-  const navScreens = ['dashboard','ejercicio','batch','mercado','progreso','ajustes'];
+  const navScreens = ['dashboard','ejercicio','batch','recordatorios','mercado','progreso','ajustes'];
   document.querySelectorAll('#nav button').forEach(btn => {
     const isActive = btn.dataset.screen === screen;
     btn.style.color = isActive ? '#fff' : '';
@@ -155,12 +156,17 @@ function irAPanel(screen) {
     screenEl.classList.add('active');
     screenActual = screen;
 
-    if (screen === 'dashboard') renderizarDashboard();
-    if (screen === 'ejercicio') renderEjercicio();
-    if (screen === 'batch') renderizarBatch();
-    if (screen === 'mercado') renderizarMercado();
-    if (screen === 'progreso') renderizarProgreso();
-    if (screen === 'ajustes') renderizarAjustes();
+    try {
+      if (screen === 'dashboard') renderizarDashboard();
+      if (screen === 'ejercicio') renderEjercicio();
+      if (screen === 'batch') renderizarBatch();
+      if (screen === 'recordatorios') renderizarRecordatorios();
+      if (screen === 'mercado') renderizarMercado();
+      if (screen === 'progreso') renderizarProgreso();
+      if (screen === 'ajustes') renderizarAjustes();
+    } catch (e) {
+      console.error('Error renderizando screen:', screen, e);
+    }
   }
 }
 
@@ -755,6 +761,84 @@ function renderizarAjustes() {
       reader.readAsText(file);
     }
   });
+}
+
+// ============ RECORDATORIOS ============
+
+function renderizarRecordatorios() {
+  console.log('🎯 Renderizando Recordatorios');
+  const container = document.getElementById('recordatorios-content');
+  if (!container) {
+    console.error('❌ Container recordatorios-content no encontrado');
+    return;
+  }
+
+  const hoy = new Date();
+  const dateStr = hoy.toISOString().split('T')[0];
+
+  // Inicializar recordatorios si no existen
+  if (!store.data.recordatorios) {
+    store.data.recordatorios = {};
+  }
+
+  const recordatoriosHoy = store.data.recordatorios[dateStr] || {};
+
+  container.innerHTML = '';
+
+  RECORDATORIOS.forEach(recordatorio => {
+    const completado = recordatoriosHoy[recordatorio.id] === true;
+
+    const card = document.createElement('div');
+    card.className = 'quest-card';
+    card.style.cssText = `
+      flex-direction: row;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      ${completado ? 'opacity: 0.6;' : ''}
+    `;
+
+    card.innerHTML = `
+      <div style="font-size: 32px; flex-shrink: 0;">${recordatorio.emoji}</div>
+      <div style="flex: 1;">
+        <div class="quest-title" style="font-size: 16px; font-weight: 600;">${recordatorio.nombre}</div>
+        <div class="text-secondary" style="font-size: 13px; margin-top: 4px;">${recordatorio.descripcion}</div>
+      </div>
+      <div class="quest-card__check ${completado ? 'quest-card__check--checked' : ''}" style="flex-shrink: 0; font-size: 24px;">
+        ${completado ? '✓' : '◯'}
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      if (!recordatoriosHoy[recordatorio.id]) {
+        recordatoriosHoy[recordatorio.id] = true;
+      } else {
+        recordatoriosHoy[recordatorio.id] = false;
+      }
+      store.data.recordatorios[dateStr] = recordatoriosHoy;
+      store.save();
+      renderizarRecordatorios();
+    });
+
+    container.appendChild(card);
+  });
+
+  // Resumen visual
+  const completados = Object.values(recordatoriosHoy).filter(v => v === true).length;
+  const summary = document.createElement('div');
+  summary.style.cssText = `
+    margin-top: 32px;
+    padding: 16px;
+    background: rgba(123, 47, 247, 0.15);
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    border: 1px solid rgba(123, 47, 247, 0.35);
+  `;
+  summary.innerHTML = `<strong>${completados} / ${RECORDATORIOS.length}</strong> tareas completadas hoy`;
+  container.appendChild(summary);
 }
 
 // ============ QUESTS / LEVEL UP ============

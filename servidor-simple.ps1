@@ -2,11 +2,11 @@ $folder = "C:\Users\clgar\OneDrive\Documentos\Claude\Salud"
 $port = 8765
 
 Write-Host "Servidor HTTP en puerto $port"
+Write-Host "Abre: http://localhost:$port"
 Write-Host ""
 
 $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$port/")
-$listener.Prefixes.Add("http://127.0.0.1:$port/")
 
 try {
   $listener.Start()
@@ -29,13 +29,12 @@ try {
         $content = [System.IO.File]::ReadAllBytes($filePath)
         $response.ContentLength64 = $content.Length
 
-        # Set content type
         $ext = [System.IO.Path]::GetExtension($filePath).ToLower()
         $contentTypes = @{
           ".html" = "text/html; charset=utf-8"
-          ".js" = "application/javascript; charset=utf-8"
-          ".css" = "text/css; charset=utf-8"
-          ".json" = "application/json; charset=utf-8"
+          ".js" = "application/javascript"
+          ".css" = "text/css"
+          ".json" = "application/json"
           ".png" = "image/png"
           ".jpg" = "image/jpeg"
           ".gif" = "image/gif"
@@ -62,12 +61,11 @@ try {
 
       $response.OutputStream.Close()
     } catch {
-      Write-Host "Request error: $_"
+      Write-Host "Error: $_"
     }
   }
 } catch {
-  Write-Host "Server error: $_"
+  Write-Host "Error: $_"
 } finally {
-  $listener.Stop()
   $listener.Close()
 }

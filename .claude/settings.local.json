@@ -20,7 +20,11 @@
       "PowerShell(Get-Process powershell -ErrorAction SilentlyContinue | Stop-Process -Force 2>$null; Start-Sleep -Milliseconds 500; cd \"C:\\\\Users\\\\clgar\\\\OneDrive\\\\Documentos\\\\Claude\\\\Salud\"; powershell -ExecutionPolicy Bypass -File server.ps1)",
       "Bash(node server.js)",
       "Bash(git commit -m 'Fix: Service Worker strategy + desabilitar SW temporalmente *)",
-      "Bash(git commit -m 'Fix: Responsive layout para iPad — una columna en tablets + padding reducido *)"
+      "Bash(git commit -m 'Fix: Responsive layout para iPad — una columna en tablets + padding reducido *)",
+      "PowerShell(where.exe python 2>$null; if \\($?\\) { \\(Get-Command python\\).Source } else { Write-Host \"No encontrado en PATH\"; $env:LOCALAPPDATA + \"\\\\Microsoft\\\\WindowsApps\\\\python.exe\" })",
+      "Bash(sleep 5 && cat /c/Users/clgar/AppData/Local/Temp/claude/C--Users-clgar-OneDrive-Documentos-Claude-Salud/a343c598-27af-41b4-8af3-9a21d6100aec/tasks/bbdja0qg1.output 2>/dev/null | head -20)",
+      "Bash(git commit -m 'Fix: Batch cooking mejorado — claro, agregado por ingrediente, nevera vs congelador *)",
+      "Bash(git commit *)"
     ]
   }
 }
