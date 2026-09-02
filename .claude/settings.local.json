@@ -25,7 +25,8 @@
       "Bash(sleep 5 && cat /c/Users/clgar/AppData/Local/Temp/claude/C--Users-clgar-OneDrive-Documentos-Claude-Salud/a343c598-27af-41b4-8af3-9a21d6100aec/tasks/bbdja0qg1.output 2>/dev/null | head -20)",
       "Bash(git commit -m 'Fix: Batch cooking mejorado — claro, agregado por ingrediente, nevera vs congelador *)",
       "Bash(git commit *)",
-      "Bash(git commit -m 'Feat: Recordatorios funcional - 3 tareas daily con checkboxes y persistencia *)"
+      "Bash(git commit -m 'Feat: Recordatorios funcional - 3 tareas daily con checkboxes y persistencia *)",
+      "Bash(git commit -m 'Feat: Rutina Diaria completa - cronograma con horarios y checkboxes *)"
     ]
   }
 }

@@ -8,7 +8,7 @@ import { RECETAS, pasosNormalizados } from './data/recetas.js';
 import { HORARIO, RUTINA_SEMANAL, getDiaDelMes, getRutinaDia } from './data/horario.js';
 import { MERCADO } from './data/mercado.js';
 import { BATCH_COOKING, getBatchCooking, getBatchCookingList } from './data/batch.js';
-import { RECORDATORIOS } from './data/reminders.js';
+import { RUTINA_DIARIA } from './data/rutina.js';
 import { getFaseActiva } from './data/fases.js';
 import { macrosDeReceta, totalesDelDia, progresoVsMeta, autoVerificar } from './core/macros.js';
 import { renderEjercicio } from './screens/ejercicio.js';
@@ -171,7 +171,7 @@ function irAPanel(screen) {
       if (screen === 'dashboard') renderizarDashboard();
       if (screen === 'ejercicio') renderEjercicio();
       if (screen === 'batch') renderizarBatch();
-      if (screen === 'recordatorios') renderizarRecordatorios();
+      if (screen === 'recordatorios') renderizarRutina();
       if (screen === 'mercado') renderizarMercado();
       if (screen === 'progreso') renderizarProgreso();
       if (screen === 'ajustes') renderizarAjustes();
@@ -774,10 +774,10 @@ function renderizarAjustes() {
   });
 }
 
-// ============ RECORDATORIOS ============
+// ============ RUTINA DIARIA ============
 
-function renderizarRecordatorios() {
-  console.log('🎯 Renderizando Recordatorios');
+function renderizarRutina() {
+  console.log('🎯 Renderizando Rutina Diaria');
   const container = document.getElementById('recordatorios-content');
   if (!container) {
     console.error('❌ Container recordatorios-content no encontrado');
@@ -788,57 +788,75 @@ function renderizarRecordatorios() {
     const hoy = new Date();
     const dateStr = hoy.toISOString().split('T')[0];
 
-    // Inicializar recordatorios si no existen
-    if (!store.data.recordatorios) {
-      store.data.recordatorios = {};
+    const horaActual = `${String(hoy.getHours()).padStart(2, '0')}:${String(hoy.getMinutes()).padStart(2, '0')}`;
+
+    // Inicializar rutina si no existen
+    if (!store.data.rutina) {
+      store.data.rutina = {};
     }
 
-    const recordatoriosHoy = store.data.recordatorios[dateStr] || {};
+    const rutinaDia = store.data.rutina[dateStr] || {};
 
     container.innerHTML = '';
 
-    RECORDATORIOS.forEach(recordatorio => {
-    const completado = recordatoriosHoy[recordatorio.id] === true;
-
-    const card = document.createElement('div');
-    card.className = 'quest-card';
-    card.style.cssText = `
-      flex-direction: row;
-      align-items: center;
-      gap: 16px;
-      padding: 16px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      ${completado ? 'opacity: 0.6;' : ''}
+    // Mostrar hora actual
+    const horaActualDiv = document.createElement('div');
+    horaActualDiv.style.cssText = `
+      padding: 12px 16px;
+      background: rgba(62, 197, 255, 0.15);
+      border-radius: 4px;
+      text-align: center;
+      margin-bottom: 20px;
+      border: 1px solid rgba(62, 197, 255, 0.35);
+      font-size: 14px;
     `;
+    horaActualDiv.innerHTML = `<strong>⏰ Hora actual: ${horaActual}</strong>`;
+    container.appendChild(horaActualDiv);
 
-    card.innerHTML = `
-      <div style="font-size: 32px; flex-shrink: 0;">${recordatorio.emoji}</div>
-      <div style="flex: 1;">
-        <div class="quest-title" style="font-size: 16px; font-weight: 600;">${recordatorio.nombre}</div>
-        <div class="text-secondary" style="font-size: 13px; margin-top: 4px;">${recordatorio.descripcion}</div>
-      </div>
-      <div class="quest-card__check ${completado ? 'quest-card__check--checked' : ''}" style="flex-shrink: 0; font-size: 24px;">
-        ${completado ? '✓' : '◯'}
-      </div>
-    `;
+    RUTINA_DIARIA.forEach((actividad, index) => {
+      const completada = rutinaDia[index] === true;
 
-    card.addEventListener('click', () => {
-      if (!recordatoriosHoy[recordatorio.id]) {
-        recordatoriosHoy[recordatorio.id] = true;
-      } else {
-        recordatoriosHoy[recordatorio.id] = false;
-      }
-      store.data.recordatorios[dateStr] = recordatoriosHoy;
-      store.save();
-      renderizarRecordatorios();
+      const card = document.createElement('div');
+      card.className = 'quest-card';
+      card.style.cssText = `
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        ${completada ? 'opacity: 0.6;' : ''}
+        background: rgba(62, 197, 255, 0.05);
+        border-left: 4px solid rgba(62, 197, 255, 0.4);
+        margin-bottom: 8px;
+      `;
+
+      card.innerHTML = `
+        <div style="font-size: 28px; flex-shrink: 0;">${actividad.emoji}</div>
+        <div style="flex: 1;">
+          <div class="quest-title" style="font-size: 15px; font-weight: 600;">${actividad.actividad}</div>
+          <div class="text-secondary" style="font-size: 12px; margin-top: 2px;">
+            <strong>${actividad.hora}</strong> • ${actividad.duracion}
+            ${actividad.detalle ? `<br><em>${actividad.detalle}</em>` : ''}
+          </div>
+        </div>
+        <div class="quest-card__check ${completada ? 'quest-card__check--checked' : ''}" style="flex-shrink: 0; font-size: 22px;">
+          ${completada ? '✓' : '◯'}
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        rutinaDia[index] = !rutinaDia[index];
+        store.data.rutina[dateStr] = rutinaDia;
+        store.save();
+        renderizarRutina();
+      });
+
+      container.appendChild(card);
     });
 
-    container.appendChild(card);
-  });
-
-  // Resumen visual
-  const completados = Object.values(recordatoriosHoy).filter(v => v === true).length;
+    // Resumen visual
+    const completadas = Object.values(rutinaDia).filter(v => v === true).length;
   const summary = document.createElement('div');
   summary.style.cssText = `
     margin-top: 32px;
@@ -849,10 +867,10 @@ function renderizarRecordatorios() {
     font-size: 14px;
     border: 1px solid rgba(123, 47, 247, 0.35);
   `;
-    summary.innerHTML = `<strong>${completados} / ${RECORDATORIOS.length}</strong> tareas completadas hoy`;
+    summary.innerHTML = `<strong>${completadas} / ${RUTINA_DIARIA.length}</strong> actividades completadas hoy`;
     container.appendChild(summary);
   } catch (e) {
-    console.error('Error en renderizarRecordatorios:', e);
+    console.error('Error en renderizarRutina:', e);
     container.innerHTML = `<div style="padding: 16px; color: #ff6b6b;">Error: ${e.message}</div>`;
   }
 }
