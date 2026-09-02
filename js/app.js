@@ -11,6 +11,7 @@ import { BATCH_COOKING, getBatchCooking, getBatchCookingList } from './data/batc
 import { getFaseActiva } from './data/fases.js';
 import { macrosDeReceta, totalesDelDia, progresoVsMeta, autoVerificar } from './core/macros.js';
 import { renderEjercicio } from './screens/ejercicio.js';
+import { inicializarRecetaOverlay, abrirRecetaOverlay } from './screens/receta-overlay.js';
 
 // Verificación de datos
 console.log('🔍 Verificando aritmética de macros...');
@@ -81,6 +82,9 @@ function mostrarOnboarding() {
 }
 
 function setupEventListeners() {
+  // Inicializar overlay de receta
+  inicializarRecetaOverlay();
+
   // Nav buttons
   document.querySelectorAll('#nav button').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -223,11 +227,11 @@ function renderizarDashboard() {
         </div>
       </div>
       ${recetaData ? `
-        <button data-role="cocinar"
+        <button data-role="ver-receta"
           style="width:100%;background:linear-gradient(90deg,rgba(123,47,247,.45),rgba(62,197,255,.2));
                  border-color:rgba(62,197,255,.55);font-size:12px;min-height:40px;
                  letter-spacing:.2em;padding:8px 12px;">
-          ${completada ? '↩ VER RECETA DE NUEVO' : '▶ COCINAR PASO A PASO'}
+          ▶ VER RECETA
         </button>
       ` : ''}
     `;
@@ -245,12 +249,12 @@ function renderizarDashboard() {
       renderizarDashboard();
     });
 
-    // Botón "COCINAR PASO A PASO" — va directo al modo guiado
-    const cocinarBtn = card.querySelector('[data-role="cocinar"]');
-    if (cocinarBtn) {
-      cocinarBtn.addEventListener('click', (e) => {
+    // Botón "VER RECETA" — abre overlay
+    const verRecetaBtn = card.querySelector('[data-role="ver-receta"]');
+    if (verRecetaBtn) {
+      verRecetaBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        iniciarGuiado(quest.receta);
+        abrirRecetaOverlay(quest.receta, iniciarGuiado);
       });
     }
 

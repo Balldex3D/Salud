@@ -299,6 +299,107 @@
   <!-- ── Ejercicio: Toasts ── -->
   <div id="ej-toasts" style="position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:900;display:flex;flex-direction:column;gap:10px;width:min(92vw,420px);pointer-events:none"></div>
 
+  <!-- ── OVERLAY: Receta Detallada ── -->
+  <div id="overlay-receta" style="position:fixed;inset:0;z-index:950;display:none;background:rgba(0,0,0,.85);overflow-y:auto;padding-bottom:60px;">
+    <div style="background:var(--clr-panel);margin:16px;border-radius:4px;border:1px solid var(--clr-border);overflow:hidden;">
+      <!-- Foto del plato -->
+      <img id="receta-foto" src="" alt="Plato" style="width:100%;height:300px;object-fit:cover;display:block;cursor:pointer;transition:transform .3s;border-bottom:1px solid var(--clr-border);" />
+
+      <!-- Contenido de la receta -->
+      <div style="padding:var(--space-md);">
+        <!-- Título -->
+        <h2 id="receta-titulo" style="margin:0 0 var(--space-sm) 0;color:#fff;font-family:'Rajdhani',sans-serif;text-transform:uppercase;letter-spacing:.1em;"></h2>
+
+        <!-- Datos básicos -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:var(--space-md) 0;padding:var(--space-sm);background:var(--clr-darker);border-radius:2px;border:1px solid var(--clr-border);">
+          <div style="text-align:center;">
+            <div style="font-size:12px;color:var(--clr-text-secondary);text-transform:uppercase;">Kcal</div>
+            <div id="receta-kcal" style="font-size:18px;font-weight:bold;color:var(--clr-cian);"></div>
+          </div>
+          <div style="text-align:center;border-left:1px solid var(--clr-border);border-right:1px solid var(--clr-border);">
+            <div style="font-size:12px;color:var(--clr-text-secondary);text-transform:uppercase;">Tiempo</div>
+            <div id="receta-tiempo" style="font-size:18px;font-weight:bold;color:var(--clr-cian);"></div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:12px;color:var(--clr-text-secondary);text-transform:uppercase;">Dificultad</div>
+            <div id="receta-rango" style="font-size:18px;font-weight:bold;color:var(--clr-ambar);"></div>
+          </div>
+        </div>
+
+        <!-- Regla especial si existe -->
+        <div id="receta-regla" style="padding:var(--space-sm);background:linear-gradient(135deg,rgba(62,197,255,.1),rgba(123,47,247,.1));border-left:3px solid var(--clr-cian);border-radius:2px;margin:var(--space-md) 0;display:none;">
+          <div style="font-size:12px;color:var(--clr-text-secondary);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">⚠ Regla especial</div>
+          <div id="regla-texto" style="color:#fff;font-size:13px;line-height:1.4;"></div>
+        </div>
+
+        <!-- Ingredientes -->
+        <div style="margin:var(--space-lg) 0 var(--space-md) 0;">
+          <h3 style="font-size:14px;font-weight:bold;text-transform:uppercase;letter-spacing:.1em;color:var(--clr-cian);margin:0 0 var(--space-md) 0;">Ingredientes</h3>
+          <div id="receta-ingredientes" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- Pasos -->
+        <div style="margin:var(--space-lg) 0 0 0;">
+          <h3 style="font-size:14px;font-weight:bold;text-transform:uppercase;letter-spacing:.1em;color:var(--clr-cian);margin:0 0 var(--space-md) 0;">Pasos</h3>
+          <div id="receta-pasos" style="display:flex;flex-direction:column;gap:12px;"></div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:var(--space-lg) 0 var(--space-md) 0;">
+          <button id="btn-activar-cronometro" style="background:linear-gradient(90deg,rgba(62,197,255,.3),rgba(62,197,255,.1));border-color:rgba(62,197,255,.55);min-height:44px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;">⏱ CRONÓMETRO</button>
+          <button id="btn-modo-guiado" style="background:linear-gradient(90deg,rgba(123,47,247,.4),rgba(62,197,255,.2));border-color:rgba(123,47,247,.55);min-height:44px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;">👁 MODO GUIADO</button>
+        </div>
+
+        <!-- Botón cerrar -->
+        <button id="btn-cerrar-receta" style="width:100%;background:var(--clr-darker);border-color:var(--clr-border);min-height:40px;font-size:12px;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CRONÓMETRO: Independiente y flotante ── -->
+  <div id="cronometro-overlay" style="position:fixed;inset:0;z-index:940;display:none;background:rgba(0,0,0,.7);"></div>
+  <div id="cronometro-modal" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:941;display:none;width:min(90vw,380px);">
+    <div class="sys-panel-wrap">
+      <div class="panel" style="padding:var(--space-md);display:flex;flex-direction:column;gap:var(--space-md);align-items:center;">
+        <!-- Título -->
+        <div style="text-align:center;width:100%;">
+          <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:.3em;color:#3ec5ff;text-transform:uppercase;text-shadow:0 0 8px rgba(62,197,255,.8);">CRONÓMETRO</div>
+        </div>
+
+        <!-- Inputs de tiempo -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;">
+          <div>
+            <label style="font-size:11px;color:var(--clr-text-secondary);text-transform:uppercase;display:block;margin-bottom:4px;">Minutos</label>
+            <input id="crono-minutos" type="number" min="0" max="59" value="0" style="width:100%;padding:8px;background:var(--clr-darker);border:1px solid var(--clr-border);color:#fff;border-radius:2px;text-align:center;font-size:14px;font-weight:bold;" />
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--clr-text-secondary);text-transform:uppercase;display:block;margin-bottom:4px;">Segundos</label>
+            <input id="crono-segundos" type="number" min="0" max="59" value="0" style="width:100%;padding:8px;background:var(--clr-darker);border:1px solid var(--clr-border);color:#fff;border-radius:2px;text-align:center;font-size:14px;font-weight:bold;" />
+          </div>
+        </div>
+
+        <!-- Display del tiempo -->
+        <div style="font-family:'Orbitron',sans-serif;font-weight:800;font-size:54px;color:#3ec5ff;text-shadow:0 0 10px rgba(62,197,255,.9);letter-spacing:2px;text-align:center;min-height:70px;display:flex;align-items:center;justify-content:center;">
+          <span id="crono-display">00:00</span>
+        </div>
+
+        <!-- Controles -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;">
+          <button id="btn-crono-iniciar" style="min-height:44px;background:linear-gradient(135deg,rgba(123,47,247,.4),rgba(62,197,255,.2));border-color:rgba(62,197,255,.6);text-transform:uppercase;font-size:12px;letter-spacing:.1em;">▶ Iniciar</button>
+          <button id="btn-crono-pausar" style="min-height:44px;background:var(--clr-darker);border-color:var(--clr-border);text-transform:uppercase;font-size:12px;letter-spacing:.1em;display:none;">⏸ Pausar</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;">
+          <button id="btn-crono-reanudar" style="min-height:44px;background:linear-gradient(135deg,rgba(123,47,247,.4),rgba(62,197,255,.2));border-color:rgba(62,197,255,.6);text-transform:uppercase;font-size:12px;letter-spacing:.1em;display:none;">▶ Reanudar</button>
+          <button id="btn-crono-reiniciar" style="min-height:44px;background:var(--clr-darker);border-color:var(--clr-border);text-transform:uppercase;font-size:12px;letter-spacing:.1em;">↻ Reiniciar</button>
+        </div>
+
+        <!-- Cerrar -->
+        <button id="btn-crono-cerrar" style="width:100%;min-height:40px;background:var(--clr-darker);border-color:var(--clr-border);text-transform:uppercase;font-size:12px;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="./js/app.js"></script>
 </body>
 </html>
