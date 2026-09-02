@@ -123,6 +123,12 @@ function iniciarDescanso(seconds, label) {
   const endAt = Date.now() + seconds * 1000;
   store.data.ejercicio_rest_timer = { endAt, seconds, label };
   store.save();
+
+  // Iniciar cronómetro flotante automático para descanso
+  if (window.iniciarCronometroDescanso) {
+    window.iniciarCronometroDescanso(seconds, 'DESCANSO');
+  }
+
   correrDescanso(endAt, seconds, label);
 }
 

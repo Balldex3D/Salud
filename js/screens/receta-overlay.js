@@ -52,9 +52,27 @@ export function abrirRecetaOverlay(recetaId, onModoGuiado = null) {
     };
   }
 
-  // Foto
-  document.getElementById('receta-foto').src = receta.foto_url;
-  document.getElementById('receta-foto').alt = receta.nombre;
+  // Foto - Mostrar visual bonito (placeholder)
+  try {
+    const fotoEl = document.getElementById('receta-foto');
+    if (fotoEl) {
+      fotoEl.style.display = 'none';
+      const fotoParent = fotoEl.parentNode;
+
+      // Remover placeholder anterior
+      const old = fotoParent?.querySelector('[id="receta-foto-placeholder"]');
+      if (old) old.remove();
+
+      // Crear y insertar placeholder
+      const ph = document.createElement('div');
+      ph.id = 'receta-foto-placeholder';
+      ph.style.cssText = 'width:100%;height:300px;background:linear-gradient(135deg,rgba(123,47,247,.3),rgba(62,197,255,.15));display:flex;align-items:center;justify-content:center;flex-direction:column;border-bottom:1px solid var(--clr-border);color:var(--clr-text-secondary);gap:16px;font-family:"Rajdhani",sans-serif;';
+      ph.innerHTML = '<div style="font-size:96px">🍽️</div><div style="text-align:center;"><div style="font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--clr-cian);margin-bottom:4px;">FOTO DE RECETA</div><div style="font-size:11px;letter-spacing:.05em;">Disponible pronto</div></div>';
+      fotoParent?.insertBefore(ph, fotoEl);
+    }
+  } catch (e) {
+    console.error('Error showing recipe placeholder:', e);
+  }
 
   // Título
   document.getElementById('receta-titulo').textContent = receta.nombre;

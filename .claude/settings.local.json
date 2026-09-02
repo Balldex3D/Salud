@@ -26,7 +26,10 @@
       "Bash(git commit -m 'Fix: Batch cooking mejorado — claro, agregado por ingrediente, nevera vs congelador *)",
       "Bash(git commit *)",
       "Bash(git commit -m 'Feat: Recordatorios funcional - 3 tareas daily con checkboxes y persistencia *)",
-      "Bash(git commit -m 'Feat: Rutina Diaria completa - cronograma con horarios y checkboxes *)"
+      "Bash(git commit -m 'Feat: Rutina Diaria completa - cronograma con horarios y checkboxes *)",
+      "Bash(node -c js/data/recetas.js)",
+      "Bash(git commit -m 'Fix: Compras semanales exactas al recetario + quitar presupuesto estimado *)",
+      "Bash(git commit -m 'Rewrite: Claridad COMPLETA en recetas, batch, ejercicios *)"
     ]
   }
 }

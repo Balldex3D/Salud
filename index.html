@@ -151,6 +151,68 @@
     /* ── Ejercicio: Rest overlay ── */
     #ej-rest-overlay.show { display: block; animation: ejRestIn .4s cubic-bezier(.2,1.2,.3,1); }
     @keyframes ejRestIn { from{opacity:0;transform:translateX(-50%) translateY(24px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+
+    /* ── Cronómetro Flotante ── */
+    #cronometro-flotante button {
+      background: var(--clr-darker);
+      border: 1px solid rgba(62,197,255,.4);
+      color: #fff;
+      cursor: pointer;
+      transition: all .2s;
+      font-weight: 700;
+      border-radius: 2px;
+      font-family: 'Rajdhani', sans-serif;
+    }
+    #cronometro-flotante button:active {
+      background: rgba(62,197,255,.3);
+      border-color: #3ec5ff;
+    }
+
+    /* Toast Animations */
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(.8);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    @keyframes toastOut {
+      from {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(.8);
+      }
+    }
+
+    /* Overlay descanso completado */
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes fadeOutScale {
+      from {
+        opacity: 1;
+        transform: scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: scale(.95);
+      }
+    }
   </style>
 </head>
 <body>
@@ -276,6 +338,21 @@
     <button data-screen="mercado">Mercado</button>
     <button data-screen="progreso">Progreso</button>
     <button data-screen="ajustes">Ajustes</button>
+  </div>
+
+  <!-- ── Cronómetro Flotante ── -->
+  <div id="cronometro-flotante" style="position:fixed;top:80px;right:12px;z-index:700;display:none">
+    <div class="sys-panel-wrap" style="width:160px">
+      <div class="panel" style="padding:12px;text-align:center;font-size:12px">
+        <div style="color:#3ec5ff;font-weight:700;margin-bottom:8px;font-size:11px;letter-spacing:.1em" id="crono-fase">CALENTAMIENTO</div>
+        <div style="font-size:24px;font-weight:900;font-family:monospace;color:#fff;margin-bottom:8px" id="crono-tiempo">00:00</div>
+        <div style="display:flex;gap:6px;justify-content:center">
+          <button id="crono-start" style="flex:1;padding:6px;font-size:10px;min-height:28px;letter-spacing:.15em">▶</button>
+          <button id="crono-pause" style="flex:1;padding:6px;font-size:10px;min-height:28px;letter-spacing:.15em;display:none">⏸</button>
+          <button id="crono-reset" style="flex:1;padding:6px;font-size:10px;min-height:28px;letter-spacing:.15em">⟲</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ── Ejercicio: Timer de descanso ── -->

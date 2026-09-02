@@ -920,5 +920,282 @@ function mostrarLevelUp(nuevoNivel) {
   setTimeout(() => overlay.remove(), 2500);
 }
 
+// ════════════════════════════════════════════════════════════════════════
+// CRONÓMETRO FLOTANTE PARA EJERCICIO
+// ════════════════════════════════════════════════════════════════════════
+
+let cronometro = {
+  en_uso: false,
+  en_pausa: false,
+  segundos: 0,
+  intervalo: null,
+  fase: 'CALENTAMIENTO'
+};
+
+function actualizarVistaChronometro() {
+  const tiempoElement = document.getElementById('crono-tiempo');
+  const minutos = Math.floor(cronometro.segundos / 60);
+  const segundos = cronometro.segundos % 60;
+  tiempoElement.textContent = `${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
+}
+
+function iniciarCronometro(fase = 'CALENTAMIENTO') {
+  if (cronometro.en_uso && !cronometro.en_pausa) return; // Ya corriendo
+
+  if (!cronometro.en_uso) {
+    cronometro.en_uso = true;
+    cronometro.en_pausa = false;
+    cronometro.segundos = 0;
+    cronometro.fase = fase;
+    document.getElementById('crono-fase').textContent = fase;
+  }
+
+  document.getElementById('crono-start').style.display = 'none';
+  document.getElementById('crono-pause').style.display = 'block';
+  document.getElementById('cronometro-flotante').style.display = 'block';
+  cronometro.en_pausa = false;
+
+  if (cronometro.intervalo) clearInterval(cronometro.intervalo);
+
+  cronometro.intervalo = setInterval(() => {
+    cronometro.segundos++;
+    actualizarVistaChronometro();
+  }, 1000);
+}
+
+function pausarCronometro() {
+  if (!cronometro.en_uso || cronometro.en_pausa) return;
+
+  clearInterval(cronometro.intervalo);
+  cronometro.en_pausa = true;
+  document.getElementById('crono-pause').style.display = 'none';
+  document.getElementById('crono-start').style.display = 'block';
+}
+
+function reanudaCronometro() {
+  if (!cronometro.en_uso || !cronometro.en_pausa) return;
+  iniciarCronometro();
+}
+
+function resetearCronometro() {
+  if (cronometro.intervalo) clearInterval(cronometro.intervalo);
+  cronometro.en_uso = false;
+  cronometro.en_pausa = false;
+  cronometro.segundos = 0;
+  cronometro.intervalo = null;
+
+  document.getElementById('cronometro-flotante').style.display = 'none';
+  document.getElementById('crono-start').style.display = 'block';
+  document.getElementById('crono-pause').style.display = 'none';
+  actualizarVistaChronometro();
+}
+
+function sonarCronometroCompleto() {
+  // Sonido positivo tipo "success" + notificación visual
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const gain = audioContext.createGain();
+    gain.connect(audioContext.destination);
+
+    // Melodía positiva: Do-Mi-Sol (C-E-G) en ascendencia
+    const notas = [
+      { freq: 523.25, duracion: 0.2 },   // Do
+      { freq: 659.25, duracion: 0.2 },   // Mi
+      { freq: 783.99, duracion: 0.4 }    // Sol (más larga)
+    ];
+
+    let tiempo = audioContext.currentTime;
+
+    notas.forEach((nota, idx) => {
+      const osc = audioContext.createOscillator();
+      const noteGain = audioContext.createGain();
+
+      osc.frequency.value = nota.freq;
+      osc.type = 'sine';
+
+      // Fade in suave
+      noteGain.gain.setValueAtTime(0, tiempo);
+      noteGain.gain.linearRampToValueAtTime(0.4, tiempo + 0.05);
+
+      // Fade out suave
+      noteGain.gain.setValueAtTime(0.4, tiempo + nota.duracion - 0.05);
+      noteGain.gain.linearRampToValueAtTime(0, tiempo + nota.duracion);
+
+      osc.connect(noteGain);
+      noteGain.connect(gain);
+
+      osc.start(tiempo);
+      osc.stop(tiempo + nota.duracion);
+
+      tiempo += nota.duracion + 0.05;
+    });
+  } catch (e) {
+    console.log('Audio context no disponible');
+  }
+
+  // Vibración más notoria (patrón de pulsos)
+  if (navigator.vibrate) {
+    navigator.vibrate([100, 50, 100, 50, 200]);
+  }
+
+  // Notificación visual: Toast
+  mostrarToastCronometro('✓ ¡COMPLETADO!', cronometro.fase);
+}
+
+function mostrarToastCronometro(titulo, fase) {
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, rgba(123,47,247,.9), rgba(62,197,255,.7));
+    color: #fff;
+    padding: 24px 32px;
+    border-radius: 8px;
+    text-align: center;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(62,197,255,.4);
+    border: 2px solid rgba(62,197,255,.6);
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: .15em;
+    animation: toastIn .4s ease-out;
+  `;
+
+  toast.innerHTML = `
+    <div style="font-size: 32px; font-weight: 900; margin-bottom: 8px;">
+      ${titulo}
+    </div>
+    <div style="font-size: 14px; color: rgba(255,255,255,.8); letter-spacing: .1em;">
+      ${fase}
+    </div>
+  `;
+
+  document.body.appendChild(toast);
+
+  // Auto-remove después de 3 segundos (más tiempo para que se vea bien)
+  setTimeout(() => {
+    toast.style.animation = 'toastOut .4s ease-out forwards';
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
+}
+
+// Función pública para iniciar cronómetro de descanso automático
+window.iniciarCronometroDescanso = function(segundos, fase = 'DESCANSO') {
+  // Resetear primero
+  if (cronometro.intervalo) clearInterval(cronometro.intervalo);
+  cronometro.en_uso = false;
+  cronometro.en_pausa = false;
+  cronometro.segundos = 0;
+  cronometro.intervalo = null;
+
+  // Configurar y mostrar
+  cronometro.en_uso = true;
+  cronometro.en_pausa = false;
+  cronometro.segundos = 0;
+  cronometro.fase = fase;
+
+  document.getElementById('crono-fase').textContent = fase;
+  document.getElementById('crono-start').style.display = 'none';
+  document.getElementById('crono-pause').style.display = 'block';
+  document.getElementById('cronometro-flotante').style.display = 'block';
+
+  // Iniciar conteo
+  let tiempoDescanso = segundos;
+  cronometro.intervalo = setInterval(() => {
+    cronometro.segundos++;
+    actualizarVistaChronometro();
+
+    // Cuando llega al tiempo de descanso, notificar
+    if (cronometro.segundos >= tiempoDescanso) {
+      clearInterval(cronometro.intervalo);
+      cronometro.en_uso = false;
+
+      // Notificar que descanso completado con overlay permanente
+      mostrarOverlayDescansoCompleto();
+      sonarCronometroCompleto();
+    }
+  }, 1000);
+};
+
+function mostrarOverlayDescansoCompleto() {
+  const overlay = document.createElement('div');
+  overlay.id = 'descanso-completo-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(5,8,16,0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    animation: fadeInScale .4s ease-out;
+  `;
+
+  overlay.innerHTML = `
+    <div style="text-align:center;padding:40px">
+      <div style="font-size:64px;margin-bottom:20px">✓</div>
+      <div style="
+        font-size:48px;
+        font-weight:900;
+        color:#41f0a6;
+        font-family:'Rajdhani',sans-serif;
+        letter-spacing:.15em;
+        margin-bottom:30px;
+        text-transform:uppercase;
+        text-shadow:0 0 20px rgba(65,240,166,.8)
+      ">¡DESCANSO<br>COMPLETADO!</div>
+      <div style="
+        font-size:18px;
+        color:#3ec5ff;
+        margin-bottom:40px;
+        letter-spacing:.1em
+      ">Descansa bien. Prepare la siguiente serie.</div>
+      <button id="cerrar-descanso" style="
+        padding:16px 40px;
+        font-size:16px;
+        font-weight:700;
+        background:linear-gradient(180deg,rgba(65,240,166,.4),rgba(62,197,255,.15));
+        color:#fff;
+        border:2px solid rgba(65,240,166,.6);
+        border-radius:4px;
+        cursor:pointer;
+        font-family:'Rajdhani',sans-serif;
+        letter-spacing:.15em;
+        text-transform:uppercase;
+        transition:all .3s;
+      ">Continuar</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Cerrar overlay
+  document.getElementById('cerrar-descanso').addEventListener('click', () => {
+    overlay.style.animation = 'fadeOutScale .3s ease-out forwards';
+    setTimeout(() => overlay.remove(), 300);
+    document.getElementById('cronometro-flotante').style.display = 'none';
+  });
+}
+
+// Listeners del cronómetro
+document.getElementById('crono-start').addEventListener('click', () => {
+  if (cronometro.en_pausa) {
+    reanudaCronometro();
+  } else {
+    iniciarCronometro();
+  }
+});
+
+document.getElementById('crono-pause').addEventListener('click', pausarCronometro);
+
+document.getElementById('crono-reset').addEventListener('click', () => {
+  resetearCronometro();
+  sonarCronometroCompleto();
+});
+
 // Iniciar
 init();
