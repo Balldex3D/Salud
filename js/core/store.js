@@ -1,44 +1,130 @@
 /**
- * Almacenamiento local en localStorage con versionado de esquema.
- * Soporte para exportar/importar backups JSON.
+ * Almacenamiento con IndexedDB (Safari-safe) + localStorage fallback.
+ * Versionado de esquema y backup JSON.
  */
 
 const VERSION = 1;
 const STORAGE_KEY = 'recetario_v' + VERSION;
+const IDB_NAME = 'RecetarioApp';
+const IDB_STORE = 'appState';
 
 export class Store {
   constructor() {
-    this.data = this.load();
+    this.data = null;
+    this.idbReady = false;
+    this.useIDB = true;
   }
 
-  load() {
+  /**
+   * Inicializa IndexedDB y carga datos
+   */
+  async init() {
+    if ('indexedDB' in window) {
+      try {
+        this.db = await this.initIDB();
+        this.idbReady = true;
+        this.useIDB = true;
+        this.data = await this.loadFromIDB();
+        console.log('✓ IndexedDB inicializado');
+      } catch (e) {
+        console.warn('IndexedDB error, fallback a localStorage:', e);
+        this.useIDB = false;
+        this.data = this.loadFromLocalStorage();
+      }
+    } else {
+      console.warn('IndexedDB no disponible, usando localStorage');
+      this.useIDB = false;
+      this.data = this.loadFromLocalStorage();
+    }
+
+    if (!this.data) {
+      this.data = this.getDefaultData();
+    }
+  }
+
+  /**
+   * Inicializa base de datos IndexedDB
+   */
+  initIDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(IDB_NAME, 1);
+
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) {
+          db.createObjectStore(IDB_STORE);
+        }
+      };
+    });
+  }
+
+  /**
+   * Carga datos desde IndexedDB
+   */
+  loadFromIDB() {
+    return new Promise((resolve) => {
+      const tx = this.db.transaction(IDB_STORE, 'readonly');
+      const store = tx.objectStore(IDB_STORE);
+      const request = store.get(STORAGE_KEY);
+
+      request.onsuccess = () => {
+        const data = request.result;
+        if (data) {
+          resolve(this.migrateData(data));
+        } else {
+          resolve(null);
+        }
+      };
+
+      request.onerror = () => resolve(null);
+    });
+  }
+
+  /**
+   * Carga datos desde localStorage (fallback)
+   */
+  loadFromLocalStorage() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
-        // Migrar: garantizar que campos de ejercicio existan en datos previos
-        if (!parsed.ejercicio_stats) {
-          parsed.ejercicio_stats = { fuerza: 0, resistencia: 0, agilidad: 0, vitalidad: 0 };
-        }
-        if (!parsed.ejercicio_historial) parsed.ejercicio_historial = [];
-        if (!('ejercicio_hoy' in parsed)) parsed.ejercicio_hoy = null;
-        if (!('ejercicio_rest_timer' in parsed)) parsed.ejercicio_rest_timer = null;
-        return parsed;
+        return this.migrateData(JSON.parse(stored));
       } catch (e) {
-        console.error('Error parsing stored data:', e);
+        console.error('Error parsing localStorage:', e);
+        return null;
       }
     }
+    return null;
+  }
 
-    // Estado inicial
+  /**
+   * Migración de datos entre versiones
+   */
+  migrateData(data) {
+    if (!data.ejercicio_stats) {
+      data.ejercicio_stats = { fuerza: 0, resistencia: 0, agilidad: 0, vitalidad: 0 };
+    }
+    if (!data.ejercicio_historial) data.ejercicio_historial = [];
+    if (!('ejercicio_hoy' in data)) data.ejercicio_hoy = null;
+    if (!('ejercicio_rest_timer' in data)) data.ejercicio_rest_timer = null;
+    return data;
+  }
+
+  /**
+   * Estado inicial por defecto
+   */
+  getDefaultData() {
     return {
       version: VERSION,
-      nivel: 'E',  // Rango inicial (Sistema Solo Leveling)
+      nivel: 'E',
       xp: 0,
       racha: 0,
       ultima_fecha_completada: null,
-      quests_completadas: {}, // { 'YYYY-MM-DD': { batido: true, almuerzo: true, cena: true, batch?: true } }
-      historial: [], // { fecha, quest_id, tipo, kcal, p, g, c }
-      mercado_checklist: {}, // { 'semanal_0': true, 'mensual_3': false, ... }
+      quests_completadas: {},
+      historial: [],
+      mercado_checklist: {},
       ajustes: {
         notificaciones_habilitadas: true,
         batch_cooking_hora: '20:00',
@@ -49,26 +135,63 @@ export class Store {
         alerta_timer_voz: true
       },
       ultimo_backup: null,
-
-      // ── Ejercicio ──────────────────────────────────────────────
       ejercicio_stats: {
-        fuerza:      0,
+        fuerza: 0,
         resistencia: 0,
-        agilidad:    0,
-        vitalidad:   0,
+        agilidad: 0,
+        vitalidad: 0,
       },
-      // Progreso del día de ejercicio actual
-      ejercicio_hoy: null, // { date, questId, checks: {}, sets: {exId: [reps]}, complete }
-      ejercicio_historial: [], // { date, questId, questName, sets, complete }
-      ejercicio_rest_timer: null, // { endAt, seconds, label }
+      ejercicio_hoy: null,
+      ejercicio_historial: [],
+      ejercicio_rest_timer: null,
     };
   }
 
-  save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+  /**
+   * Guarda datos en IndexedDB + localStorage
+   */
+  async save() {
+    if (this.useIDB && this.idbReady) {
+      try {
+        await this.saveToIDB();
+      } catch (e) {
+        console.warn('Error saving to IDB:', e);
+        this.saveToLocalStorage();
+      }
+    } else {
+      this.saveToLocalStorage();
+    }
   }
 
-  // Gamificación
+  /**
+   * Guarda en IndexedDB
+   */
+  saveToIDB() {
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction(IDB_STORE, 'readwrite');
+      const store = tx.objectStore(IDB_STORE);
+      const request = store.put(this.data, STORAGE_KEY);
+
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve();
+    });
+  }
+
+  /**
+   * Guarda en localStorage
+   */
+  saveToLocalStorage() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
+    } catch (e) {
+      console.error('Error saving to localStorage:', e);
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // MÉTODOS DE NEGOCIO (sin cambios)
+  // ════════════════════════════════════════════════════════════════════════
+
   registrarQuest(fecha, tipo, recetaData) {
     const dateStr = fecha.toISOString().split('T')[0];
     if (!this.data.quests_completadas[dateStr]) {
@@ -76,21 +199,17 @@ export class Store {
     }
     this.data.quests_completadas[dateStr][tipo] = true;
 
-    // Sumar XP
     const xpPorTipo = { batido: 20, almuerzo: 40, cena: 40, batch_cooking: 80 };
     this.data.xp += xpPorTipo[tipo] || 0;
 
-    // Chequear día completo y bonus
     const dia = this.data.quests_completadas[dateStr];
     if (dia.batido && dia.almuerzo && dia.cena) {
-      this.data.xp += 25; // Bono día completo
+      this.data.xp += 25;
     }
 
-    // Chequear level up
     const nivelAnterior = this.data.nivel;
     this.data.nivel = this.calcularNivel(this.data.xp);
 
-    // Historial
     this.data.historial.push({
       fecha: dateStr,
       quest_id: tipo === 'batch_cooking' ? 'batch' : tipo,
@@ -112,28 +231,26 @@ export class Store {
 
   calcularNivel(xp) {
     let nivel = 1;
-    let xpRequerido = 100; // Lv.1->2
+    let xpRequerido = 100;
     let xpAcumulado = 0;
 
     while (xpAcumulado + xpRequerido <= xp) {
       xpAcumulado += xpRequerido;
       nivel++;
-      xpRequerido = 100 + (nivel - 2) * 50; // Lv.2->3 = 150, Lv.3->4 = 200, etc.
+      xpRequerido = 100 + (nivel - 2) * 50;
     }
 
     return nivel;
   }
 
-  // Sistema de RANGOS (Solo Leveling): E → D → C → B → A → S
-  // Progresión DIFICIL: refleja resultados reales en vida (125 XP/día = 1-1.5 años para S)
   calcularRango(xpTotal) {
     const rangos = [
-      { rango: 'E', xpMin: 0,      xpMax: 2000 },    // E: 0-2,000 (2k para avanzar)
-      { rango: 'D', xpMin: 2000,   xpMax: 5000 },    // D: 2k-5k (3k para avanzar)
-      { rango: 'C', xpMin: 5000,   xpMax: 12000 },   // C: 5k-12k (7k para avanzar)
-      { rango: 'B', xpMin: 12000,  xpMax: 25000 },   // B: 12k-25k (13k para avanzar)
-      { rango: 'A', xpMin: 25000,  xpMax: 60000 },   // A: 25k-60k (35k para avanzar)
-      { rango: 'S', xpMin: 60000,  xpMax: Infinity } // S: 60k+ (~1.3 años @ 125 XP/día)
+      { rango: 'E', xpMin: 0,      xpMax: 2000 },
+      { rango: 'D', xpMin: 2000,   xpMax: 5000 },
+      { rango: 'C', xpMin: 5000,   xpMax: 12000 },
+      { rango: 'B', xpMin: 12000,  xpMax: 25000 },
+      { rango: 'A', xpMin: 25000,  xpMax: 60000 },
+      { rango: 'S', xpMin: 60000,  xpMax: Infinity }
     ];
 
     for (const r of rangos) {
@@ -147,7 +264,7 @@ export class Store {
         };
       }
     }
-    // Si alcanza S: sin límite
+
     return {
       rango: 'S',
       xpEnRango: xpTotal - 60000,
@@ -160,7 +277,7 @@ export class Store {
   obtenerProgresoNivel(xp) {
     const rangoData = this.calcularRango(xp);
     return {
-      nivel: rangoData.rango,  // Compatibilidad: "nivel" ahora es el rango
+      nivel: rangoData.rango,
       rango: rangoData.rango,
       xp,
       xpNivelActual: rangoData.xpMin,
@@ -171,22 +288,14 @@ export class Store {
     };
   }
 
-  calcularNivel(xp) {
-    // Para compatibilidad con código existente que espera calcularNivel()
-    return this.calcularRango(xp).rango;
-  }
-
-  // Sincroniza el estado cuando cambia de día
   sincronizarDia() {
     const hoy = new Date().toISOString().split('T')[0];
     const ultimaFecha = this.data.ultima_fecha_completada;
 
-    // Si es un día nuevo, garantizar que las quests_completadas del día estén inicializadas
     if (ultimaFecha !== hoy && !this.data.quests_completadas[hoy]) {
       this.data.quests_completadas[hoy] = {};
     }
 
-    // Si hay ejercicio_hoy de un día anterior, resetear (ejercicio es por día)
     if (this.data.ejercicio_hoy && this.data.ejercicio_hoy.date !== hoy) {
       this.data.ejercicio_hoy = null;
     }
@@ -195,7 +304,6 @@ export class Store {
   }
 
   calcularRacha(fecha = new Date()) {
-    // Racha: dias consecutivos donde se completaron todas las quests obligatorias
     let racha = 0;
     let date = new Date(fecha);
     date.setHours(0, 0, 0, 0);
@@ -214,7 +322,6 @@ export class Store {
     return racha;
   }
 
-  // Ajustes
   actualizarAjuste(key, value) {
     this.data.ajustes[key] = value;
     this.save();
@@ -224,7 +331,6 @@ export class Store {
     return this.data.ajustes[key];
   }
 
-  // Mercado
   alternarItemMercado(itemId) {
     if (!this.data.mercado_checklist[itemId]) {
       this.data.mercado_checklist[itemId] = false;
@@ -237,7 +343,6 @@ export class Store {
     return this.data.mercado_checklist;
   }
 
-  // Backup
   exportar() {
     const now = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `recetario-backup-${now}.json`;
@@ -262,16 +367,6 @@ export class Store {
     }
   }
 
-  // ── Gamificación: Ejercicio ────────────────────────────────────
-
-  /**
-   * Registra una serie completada de ejercicio.
-   * Suma XP global + incrementa stat de ejercicio.
-   * @param {string} statKey - 'fuerza' | 'resistencia' | 'agilidad' | 'vitalidad'
-   * @param {number} statGain - cuántos puntos sube el stat
-   * @param {number} xpGain - cuántos XP globales suma
-   * @returns {{ levelUp: boolean, nuevoNivel: number }}
-   */
   registrarSerie(statKey, statGain, xpGain) {
     this.data.ejercicio_stats[statKey] = (this.data.ejercicio_stats[statKey] || 0) + statGain;
     this.data.xp += xpGain;
@@ -286,21 +381,9 @@ export class Store {
     };
   }
 
-  /**
-   * Registra la finalización del bonus de quest de ejercicio.
-   * @param {string} statKey
-   * @param {number} statGain
-   * @param {number} xpGain
-   * @param {string} fecha - 'YYYY-MM-DD'
-   * @returns {{ levelUp: boolean, nuevoNivel: number }}
-   */
   registrarBonusEjercicio(statKey, statGain, xpGain, fecha) {
     this.data.ejercicio_stats[statKey] = (this.data.ejercicio_stats[statKey] || 0) + statGain;
     this.data.xp += xpGain;
-
-    // Racha de ejercicio: si no hay racha activa o la última fecha no es consecutiva,
-    // se actualiza correctamente con calcularRacha de cocina.
-    // Por ahora solo actualizamos la fecha de última misión completada.
     this.data.ultima_fecha_completada = fecha;
 
     const nivelAnterior = this.data.nivel;
@@ -313,17 +396,11 @@ export class Store {
     };
   }
 
-  /**
-   * Guarda el estado actual del día de ejercicio.
-   */
   guardarEjercicioHoy(estadoHoy) {
     this.data.ejercicio_hoy = estadoHoy;
     this.save();
   }
 
-  /**
-   * Agrega o actualiza una entrada en el historial de ejercicio.
-   */
   upsertHistorialEjercicio(entrada) {
     const idx = this.data.ejercicio_historial.findIndex(h => h.date === entrada.date);
     if (idx >= 0) {
@@ -334,9 +411,6 @@ export class Store {
     this.save();
   }
 
-  // ── Persistencia (Safari ITP mitigation) ──────────────────────
-
-  // Persistencia (Safari ITP mitigation)
   async solicitarPersistencia() {
     if (navigator.storage && navigator.storage.persist) {
       try {

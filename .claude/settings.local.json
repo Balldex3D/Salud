@@ -1,7 +1,22 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -m http.server 9999)"
+      "Bash(python -m http.server 9999)",
+      "mcp__claude-in-chrome__navigate",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Implement Solo Leveling rank system \\(E→D→C→B→A→S\\) with hard progression *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'Fix: sync day change on dashboard open — reset quests for new day *)",
+      "Bash(git commit -m 'Fix: Service Worker cache strategy — always fetch fresh HTML *)",
+      "Bash(ls -la \"C:\\\\Users\\\\clgar\\\\OneDrive\\\\Documentos\\\\Claude\\\\Salud\\\\\" | head -20)",
+      "PowerShell(node --version)",
+      "Bash(pandoc -t markdown \"C:\\\\Users\\\\clgar\\\\Downloads\\\\Recetario_Corregido_Christian_v3.docx\")",
+      "PowerShell(Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory\\(\"C:\\\\Users\\\\clgar\\\\Downloads\\\\Recetario_Corregido_Christian_v3.docx\", \"C:\\\\Users\\\\clgar\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-clgar-OneDrive-Documentos-Claude-Salud\\\\cf50db0d-fff6-4c86-a10b-13c9d7bc7e35\\\\scratchpad\\\\recetario_extracted\"\\))",
+      "PowerShell([xml]$doc = Get-Content \"C:\\\\Users\\\\clgar\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-clgar-OneDrive-Documentos-Claude-Salud\\\\cf50db0d-fff6-4c86-a10b-13c9d7bc7e35\\\\scratchpad\\\\recetario_extracted\\\\word\\\\document.xml\"; $doc.DocumentElement.InnerText | Out-File \"C:\\\\Users\\\\clgar\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-clgar-OneDrive-Documentos-Claude-Salud\\\\cf50db0d-fff6-4c86-a10b-13c9d7bc7e35\\\\scratchpad\\\\recetario_texto.txt\" -Encoding UTF8)",
+      "Bash(git commit -m 'Feat: Recetas mejoradas v3 + Overlay visual + Cronómetro independiente *)",
+      "PowerShell(cd \"C:\\\\Users\\\\clgar\\\\OneDrive\\\\Documentos\\\\Claude\\\\Salud\"; powershell -ExecutionPolicy Bypass -File server.ps1)",
+      "Bash(git commit -m 'Fix: Migrar a IndexedDB para persistencia de datos en Safari/iPad *)"
     ]
   }
 }

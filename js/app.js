@@ -25,6 +25,9 @@ let recetaGuiado = null;
 
 // Inicializar app
 async function init() {
+  // Inicializar store (IndexedDB + fallback localStorage)
+  await store.init();
+
   if ('serviceWorker' in navigator) {
     try {
       const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
