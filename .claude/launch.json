@@ -3,10 +3,11 @@
   "configurations": [
     {
       "name": "Recetario Salud",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["server.js"],
-      "port": 3000,
-      "url": "http://localhost:3000"
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-ExecutionPolicy", "Bypass", "-NoExit", "-Command", "$ErrorActionPreference='Continue'; $ProgressPreference='SilentlyContinue'; & '.\\servidor-simple.ps1'"],
+      "port": 8765,
+      "url": "http://localhost:8765",
+      "autoPort": true
     }
   ]
 }

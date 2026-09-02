@@ -19,7 +19,8 @@
       "Bash(git commit -m 'Fix: Migrar a IndexedDB para persistencia de datos en Safari/iPad *)",
       "PowerShell(Get-Process powershell -ErrorAction SilentlyContinue | Stop-Process -Force 2>$null; Start-Sleep -Milliseconds 500; cd \"C:\\\\Users\\\\clgar\\\\OneDrive\\\\Documentos\\\\Claude\\\\Salud\"; powershell -ExecutionPolicy Bypass -File server.ps1)",
       "Bash(node server.js)",
-      "Bash(git commit -m 'Fix: Service Worker strategy + desabilitar SW temporalmente *)"
+      "Bash(git commit -m 'Fix: Service Worker strategy + desabilitar SW temporalmente *)",
+      "Bash(git commit -m 'Fix: Responsive layout para iPad — una columna en tablets + padding reducido *)"
     ]
   }
 }

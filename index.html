@@ -34,8 +34,18 @@
       padding: 8px 6px; min-height: 40px; border-radius: 2px;
     }
 
-    @media (min-width: 900px) {
+    @media (min-width: 1200px) {
       .dashboard-layout { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); }
+    }
+
+    /* iPad y tablets: una sola columna */
+    @media (max-width: 1199px) {
+      .dashboard-layout { display: flex; flex-direction: column; gap: var(--space-lg); }
+    }
+
+    /* Tablets: reducir padding para evitar overflow */
+    @media (max-width: 768px) {
+      .screen { padding: var(--space-sm); }
     }
 
     .stat-block { background: var(--clr-darker); padding: var(--space-md); border: 1px solid var(--clr-border); border-radius: 2px; text-align: center; }

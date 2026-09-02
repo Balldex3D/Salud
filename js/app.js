@@ -28,9 +28,7 @@ async function init() {
   // Inicializar store (IndexedDB + fallback localStorage)
   await store.init();
 
-  // SW deshabilitado temporalmente (servidor tiene problemas serviéndolo)
-  // La persistencia de datos ya está garantizada por IndexedDB
-  if ('serviceWorker' in navigator && false) {
+  if ('serviceWorker' in navigator) {
     try {
       const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
       console.log('✓ SW registrado:', reg);

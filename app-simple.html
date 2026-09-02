@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#050810">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>◆ RECETARIO</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0e1a;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 20px;
+      padding-bottom: 100px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .fecha {
+      text-align: center;
+      color: #7fc5ff;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .panel {
+      background: #1a2540;
+      border: 1px solid #3ec5ff;
+      border-radius: 4px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .panel h2 {
+      color: #3ec5ff;
+      font-size: 16px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .quest {
+      background: #0f1820;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-left: 3px solid #3ec5ff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 2px;
+    }
+
+    .quest.completada {
+      border-left-color: #4ade80;
+      opacity: 0.6;
+    }
+
+    .quest-nombre {
+      font-size: 14px;
+    }
+
+    .quest-kcal {
+      font-size: 12px;
+      color: #7fc5ff;
+    }
+
+    .checkbox {
+      width: 32px;
+      height: 32px;
+      border: 2px solid #3ec5ff;
+      border-radius: 2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0e1a;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .checkbox.checked {
+      background: #4ade80;
+      border-color: #4ade80;
+      color: #000;
+    }
+
+    .batch {
+      background: #0f1820;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 2px;
+      font-size: 13px;
+      line-height: 1.6;
+      border-left: 3px solid #7b2ff7;
+    }
+
+    .batch strong {
+      color: #7b2ff7;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .stat {
+      background: #0f1820;
+      padding: 15px;
+      border-radius: 2px;
+      text-align: center;
+    }
+
+    .stat-valor {
+      font-size: 24px;
+      font-weight: bold;
+      color: #3ec5ff;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #7fc5ff;
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+
+    button {
+      background: linear-gradient(90deg, #7b2ff7, #3ec5ff);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      width: 100%;
+      margin-top: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>◆ RECETARIO</h1>
+    <div class="fecha" id="fecha"></div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-valor" id="nivel">E</div>
+        <div class="stat-label">Nivel</div>
+      </div>
+      <div class="stat">
+        <div class="stat-valor" id="racha">0</div>
+        <div class="stat-label">Racha</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>🎯 Quests de Hoy</h2>
+      <div id="quests"></div>
+    </div>
+
+    <div class="panel">
+      <h2>🔥 Batch Cooking</h2>
+      <div id="batch"></div>
+    </div>
+
+    <button onclick="guardarDatos()">💾 Guardar</button>
+  </div>
+
+  <script>
+    // Datos simples
+    const QUESTS_HOJA = {
+      domingo: [
+        { nombre: 'Batido post-entreno', kcal: 519, id: 'batido' },
+        { nombre: 'Almuerzo - egg_soboro_don', kcal: 916, id: 'almuerzo' },
+        { nombre: 'Cena - sopa_miso_tofu', kcal: 611, id: 'cena' },
+        { nombre: 'Batch Cooking', kcal: 0, id: 'batch' }
+      ],
+      lunes: [
+        { nombre: 'Batido post-entreno', kcal: 519, id: 'batido' },
+        { nombre: 'Almuerzo - chicken_teriyaki', kcal: 916, id: 'almuerzo' },
+        { nombre: 'Cena - sopa_miso_tofu', kcal: 611, id: 'cena' }
+      ],
+      martes: [
+        { nombre: 'Batido post-entreno', kcal: 519, id: 'batido' },
+        { nombre: 'Almuerzo - gyudon', kcal: 916, id: 'almuerzo' },
+        { nombre: 'Cena - sopa_miso_tofu', kcal: 611, id: 'cena' }
+      ],
+      miercoles: [
+        { nombre: 'Batido post-entreno', kcal: 519, id: 'batido' },
+        { nombre: 'Almuerzo - egg_soboro_don', kcal: 916, id: 'almuerzo' },
+        { nombre: 'Cena - sopa_miso_tofu', kcal: 611, id: 'cena' },
+        { nombre: 'Batch Cooking', kcal: 0, id: 'batch' }
+      ],
+      jueves: [
+        { nombre: 'Batido post-entreno', kcal: 519, id: 'batido' },
+        { nombre: 'Almuerzo - chicken_teriyaki', kcal: 916, id: 'almuerzo' },
+        { nombre: 'Cena - sopa_miso_tofu', kcal: 611, id: 'cena' }
+      ],
+      viernes: [
+        { nombre: 'Batido post-entreno', kcal: 519, id: 'batido' },
+        { nombre: 'Almuerzo - gyudon', kcal: 916, id: 'almuerzo' },
+        { nombre: 'Cena - sopa_miso_tofu', kcal: 611, id: 'cena' }
+      ],
+      sabado: [
+        { nombre: 'Batido post-entreno', kcal: 519, id: 'batido' },
+        { nombre: 'Almuerzo - chicken_teriyaki', kcal: 916, id: 'almuerzo' },
+        { nombre: 'Cena - sopa_miso_tofu', kcal: 611, id: 'cena' }
+      ]
+    };
+
+    const BATCH_COOKING = {
+      domingo: `
+        🛒 COMPRA: 195g pollo, 110g res, 550g arroz, 310g tofu, cebolla, jengibre
+
+        🔥 COCINA:
+        1. Arroz 550g (20 min)
+        2. Pollo 195g (10 min) - cocina todo junto
+        3. Res 110g marinada (5 min)
+
+        ✂️ DIVIDE:
+        • Lunes: 135g pollo cubos → NEVERA
+        • Miércoles: 60g pollo desmenuzado → CONGELADOR
+
+        📦 GUARDA:
+        • Nevera: arroz, pollo lunes, res marinada (3 días)
+        • Congelador: pollo miércoles, etiquetado, fácil descongelar
+      `,
+      miercoles: `
+        🛒 COMPRA: 135g pollo, 110g res, 420g arroz, 310g tofu
+
+        🔥 COCINA:
+        1. Arroz 420g (15 min)
+        2. Pollo 135g (10 min)
+        3. Res 110g marinada (5 min)
+
+        ✂️ DIVIDE:
+        • Jueves: 135g pollo cubos → CONGELADOR
+
+        📦 GUARDA:
+        • Nevera: arroz, res marinada (3 días)
+        • Congelador: pollo jueves, etiquetado
+      `
+    };
+
+    // Estado
+    let datos = {
+      completadas: {},
+      nivel: 'E',
+      racha: 0
+    };
+
+    // Cargar datos
+    function cargarDatos() {
+      const guardado = localStorage.getItem('recetario');
+      if (guardado) {
+        datos = JSON.parse(guardado);
+      }
+    }
+
+    // Guardar datos
+    function guardarDatos() {
+      localStorage.setItem('recetario', JSON.stringify(datos));
+      alert('✓ Datos guardados en iPad');
+    }
+
+    // Obtener día actual
+    function getDia() {
+      const dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+      return dias[new Date().getDay()];
+    }
+
+    // Renderizar
+    function render() {
+      const dia = getDia();
+
+      // Fecha
+      const hoy = new Date().toLocaleDateString('es-ES', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      });
+      document.getElementById('fecha').innerText = hoy.toUpperCase();
+
+      // Quests
+      const questsHtml = QUESTS_HOJA[dia].map(q => `
+        <div class="quest ${datos.completadas[q.id] ? 'completada' : ''}">
+          <div>
+            <div class="quest-nombre">${q.nombre}</div>
+            ${q.kcal > 0 ? `<div class="quest-kcal">${q.kcal} kcal</div>` : ''}
+          </div>
+          <div class="checkbox ${datos.completadas[q.id] ? 'checked' : ''}"
+               onclick="toggleQuest('${q.id}')">
+            ${datos.completadas[q.id] ? '✓' : ''}
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('quests').innerHTML = questsHtml;
+
+      // Batch Cooking
+      if (BATCH_COOKING[dia]) {
+        document.getElementById('batch').innerHTML = `<div class="batch">${BATCH_COOKING[dia]}</div>`;
+      }
+
+      // Stats
+      document.getElementById('nivel').innerText = datos.nivel;
+      document.getElementById('racha').innerText = datos.racha;
+    }
+
+    // Toggle quest
+    function toggleQuest(id) {
+      datos.completadas[id] = !datos.completadas[id];
+      guardarDatos();
+      render();
+    }
+
+    // Init
+    cargarDatos();
+    render();
+  </script>
+</body>
+</html>

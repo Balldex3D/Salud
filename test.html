@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #1a1a2e;
+      color: white;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      background: #0f3460;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+    button:hover {
+      background: #16213e;
+    }
+  </style>
+</head>
+<body>
+  <h1>TEST - Aplicación de Salud</h1>
+  <p>Si ves esto, la app CARGA en iPad.</p>
+
+  <button onclick="testClick()">Haz click aquí</button>
+  <p id="resultado"></p>
+
+  <script>
+    function testClick() {
+      document.getElementById('resultado').innerText = '✓ Los botones funcionan!';
+      alert('¡FUNCIONA!');
+    }
+
+    // Test localStorage
+    try {
+      localStorage.setItem('test', 'funciona');
+      const val = localStorage.getItem('test');
+      console.log('localStorage:', val);
+    } catch (e) {
+      console.log('localStorage error:', e);
+    }
+
+    // Test IndexedDB
+    if ('indexedDB' in window) {
+      console.log('IndexedDB disponible');
+    } else {
+      console.log('IndexedDB NO disponible');
+    }
+
+    console.log('APP CARGÓ');
+  </script>
+</body>
+</html>
