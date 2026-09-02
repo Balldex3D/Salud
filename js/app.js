@@ -29,6 +29,17 @@ async function init() {
   // Inicializar store (IndexedDB + fallback localStorage)
   await store.init();
 
+  // Asegurar que todos los campos necesarios existen
+  if (!store.data.quests_completadas) store.data.quests_completadas = {};
+  if (!store.data.recordatorios) store.data.recordatorios = {};
+  if (!store.data.mercado_checklist) store.data.mercado_checklist = {};
+  if (!store.data.historial) store.data.historial = [];
+  if (!store.data.ejercicio_stats) store.data.ejercicio_stats = { fuerza: 0, resistencia: 0, agilidad: 0, vitalidad: 0 };
+  if (!store.data.ejercicio_historial) store.data.ejercicio_historial = [];
+  if (!('ejercicio_hoy' in store.data)) store.data.ejercicio_hoy = null;
+  if (!('ejercicio_rest_timer' in store.data)) store.data.ejercicio_rest_timer = null;
+  await store.save();
+
   if ('serviceWorker' in navigator) {
     try {
       const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
@@ -773,19 +784,20 @@ function renderizarRecordatorios() {
     return;
   }
 
-  const hoy = new Date();
-  const dateStr = hoy.toISOString().split('T')[0];
+  try {
+    const hoy = new Date();
+    const dateStr = hoy.toISOString().split('T')[0];
 
-  // Inicializar recordatorios si no existen
-  if (!store.data.recordatorios) {
-    store.data.recordatorios = {};
-  }
+    // Inicializar recordatorios si no existen
+    if (!store.data.recordatorios) {
+      store.data.recordatorios = {};
+    }
 
-  const recordatoriosHoy = store.data.recordatorios[dateStr] || {};
+    const recordatoriosHoy = store.data.recordatorios[dateStr] || {};
 
-  container.innerHTML = '';
+    container.innerHTML = '';
 
-  RECORDATORIOS.forEach(recordatorio => {
+    RECORDATORIOS.forEach(recordatorio => {
     const completado = recordatoriosHoy[recordatorio.id] === true;
 
     const card = document.createElement('div');
@@ -837,8 +849,12 @@ function renderizarRecordatorios() {
     font-size: 14px;
     border: 1px solid rgba(123, 47, 247, 0.35);
   `;
-  summary.innerHTML = `<strong>${completados} / ${RECORDATORIOS.length}</strong> tareas completadas hoy`;
-  container.appendChild(summary);
+    summary.innerHTML = `<strong>${completados} / ${RECORDATORIOS.length}</strong> tareas completadas hoy`;
+    container.appendChild(summary);
+  } catch (e) {
+    console.error('Error en renderizarRecordatorios:', e);
+    container.innerHTML = `<div style="padding: 16px; color: #ff6b6b;">Error: ${e.message}</div>`;
+  }
 }
 
 // ============ QUESTS / LEVEL UP ============
