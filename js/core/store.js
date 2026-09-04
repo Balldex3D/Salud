@@ -3,6 +3,8 @@
  * Versionado de esquema y backup JSON.
  */
 
+import { fechaStr, formatearYMD, ahoraBogota } from './fecha.js';
+
 const VERSION = 1;
 const STORAGE_KEY = 'recetario_v' + VERSION;
 const IDB_NAME = 'RecetarioApp';
@@ -196,7 +198,7 @@ export class Store {
   // ════════════════════════════════════════════════════════════════════════
 
   registrarQuest(fecha, tipo, recetaData) {
-    const dateStr = fecha.toISOString().split('T')[0];
+    const dateStr = fechaStr(fecha);
     if (!this.data.quests_completadas[dateStr]) {
       this.data.quests_completadas[dateStr] = {};
     }
@@ -292,7 +294,7 @@ export class Store {
   }
 
   sincronizarDia() {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = fechaStr();
     const ultimaFecha = this.data.ultima_fecha_completada;
 
     if (ultimaFecha !== hoy && !this.data.quests_completadas[hoy]) {
@@ -308,11 +310,11 @@ export class Store {
 
   calcularRacha(fecha = new Date()) {
     let racha = 0;
-    let date = new Date(fecha);
+    let date = ahoraBogota(fecha);
     date.setHours(0, 0, 0, 0);
 
     while (true) {
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = formatearYMD(date);
       const dia = this.data.quests_completadas[dateStr];
 
       if (!dia || !dia.batido || !dia.almuerzo || !dia.cena) break;

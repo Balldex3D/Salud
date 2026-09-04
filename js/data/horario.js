@@ -1,5 +1,7 @@
 /** Horarios diarios y semanal del plan. */
 
+import { ahoraBogota } from '../core/fecha.js';
+
 export const HORARIO = {
   // Horas en formato HH:MM (Colombia, UTC-5)
   despertar: '08:30',
@@ -25,7 +27,7 @@ export const RUTINA_SEMANAL = {
 };
 
 export const getDiaDelMes = () => {
-  const hoy = new Date();
+  const hoy = ahoraBogota();
   const dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   return dias[hoy.getDay()];
 };

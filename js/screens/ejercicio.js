@@ -4,6 +4,7 @@
  */
 
 import { store } from '../core/store.js';
+import { ahoraBogota as getNow, fechaStr as todayStr } from '../core/fecha.js';
 import {
   QUESTS_EJERCICIO,
   STAT_LABELS,
@@ -13,28 +14,6 @@ import {
   questTotales,
   isQuestCompleta,
 } from '../data/ejercicios.js';
-
-// ── Utilidades de fecha en hora Colombia (UTC-5) ──────────────────
-
-const BOGOTA_TZ = 'America/Bogota';
-const bogotaFmt = new Intl.DateTimeFormat('en-US', {
-  timeZone: BOGOTA_TZ, hour12: false,
-  year: 'numeric', month: '2-digit', day: '2-digit',
-  hour: '2-digit', minute: '2-digit', second: '2-digit',
-});
-
-function getNow() {
-  const parts = {};
-  bogotaFmt.formatToParts(new Date()).forEach(p => {
-    if (p.type !== 'literal') parts[p.type] = p.value;
-  });
-  return new Date(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute, +parts.second);
-}
-
-function todayStr() {
-  const d = getNow();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
 
 function parseDate(s) {
   return new Date(s + 'T12:00:00');

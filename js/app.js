@@ -4,6 +4,7 @@
 
 import { store } from './core/store.js';
 import { timer } from './core/timer.js';
+import { fechaStr } from './core/fecha.js';
 import { RECETAS, pasosNormalizados } from './data/recetas.js';
 import { HORARIO, RUTINA_SEMANAL, getDiaDelMes, getRutinaDia } from './data/horario.js';
 import { MERCADO } from './data/mercado.js';
@@ -44,6 +45,15 @@ async function init() {
     try {
       const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
       console.log('✓ SW registrado:', reg);
+
+      // Recargar cuando entra una versión nueva del Service Worker
+      let recargado = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (recargado) return;
+        recargado = true;
+        console.log('✓ Nuevo SW activo, recargando app...');
+        window.location.reload();
+      });
     } catch (e) {
       console.warn('SW error:', e);
     }
@@ -97,6 +107,14 @@ function mostrarOnboarding() {
 }
 
 function setupEventListeners() {
+  // Refrescar al volver a primer plano (cambio de día, etc)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      store.sincronizarDia();
+      irAPanel(screenActual);
+    }
+  });
+
   // Inicializar overlay de receta
   inicializarRecetaOverlay();
 
@@ -190,7 +208,7 @@ function renderizarDashboard() {
   const hoy = new Date();
   const diaDelMes = getDiaDelMes();
   const rutina = getRutinaDia(diaDelMes);
-  const dateStr = hoy.toISOString().split('T')[0];
+  const dateStr = fechaStr(hoy);
   const questsDelDia = store.data.quests_completadas[dateStr] || {};
 
   const progXp = store.obtenerProgresoNivel(store.data.xp);
@@ -786,7 +804,7 @@ function renderizarRutina() {
 
   try {
     const hoy = new Date();
-    const dateStr = hoy.toISOString().split('T')[0];
+    const dateStr = fechaStr(hoy);
 
     const horaActual = `${String(hoy.getHours()).padStart(2, '0')}:${String(hoy.getMinutes()).padStart(2, '0')}`;
 
@@ -879,7 +897,7 @@ function renderizarRutina() {
 
 function completarQuest(tipoQuest, recetaData) {
   const hoy = new Date();
-  const dateStr = hoy.toISOString().split('T')[0];
+  const dateStr = fechaStr(hoy);
 
   if (!store.data.quests_completadas[dateStr]) {
     store.data.quests_completadas[dateStr] = {};

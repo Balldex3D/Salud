@@ -4,7 +4,7 @@
  */
 
 // Cambiar versión cada vez que hay cambios
-const CACHE_VERSION = 'recetario-v3';
+const CACHE_VERSION = 'recetario-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -64,7 +64,9 @@ self.addEventListener('fetch', (ev) => {
   }
 
   // STRATEGY: HTML + JS = NETWORK FIRST (siempre descarga nuevo, fallback cache)
-  if (url.pathname.endsWith('.html') || url.pathname.endsWith('.js') || url.pathname === '/') {
+  const isDocument = ev.request.mode === 'navigate' || url.pathname.endsWith('.html');
+  const isScript = url.pathname.endsWith('.js');
+  if (isDocument || isScript) {
     ev.respondWith(
       fetch(ev.request)
         .then((response) => {
